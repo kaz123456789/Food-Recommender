@@ -10,8 +10,9 @@ Copyright and Usage Information
 
 his file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
-import csv
 from __future__ import annotations
+
+import csv
 from typing import Any, Optional
 from python_ta.contracts import check_contracts
 
