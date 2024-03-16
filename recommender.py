@@ -11,12 +11,12 @@ Copyright and Usage Information
 his file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
 import csv
+from __future__ import annotations
 from typing import Any, Optional
-
 from python_ta.contracts import check_contracts
 
 
-# @check_contracts - We are commenting this out, so it doesn't slow down the code for Part 2.2
+@check_contracts
 class Tree:
     """A recursive tree data structure.
 
