@@ -2,9 +2,9 @@
 bibimbap,Korean,0,0,0/3
 bulgogi,Korean,1,0,3
 pancake,Korean,1,0/1,0/3
-pork_bone_soup,Korean,0,0,0/3
-black_bean_sauce_noodle,Korean,0,0/1,0
-cold_noodle,Korean,0,0/1,0/3
+pork bone soup,Korean,0,0,0/3
+black bean sauce noodle,Korean,0,0/1,0
+cold noodle,Korean,0,0/1,0/3
 
 (main=0, side=1, dessert=2;
 non-vegan=0, vegan=1;
