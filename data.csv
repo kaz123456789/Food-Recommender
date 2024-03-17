@@ -12,20 +12,20 @@ savory=0 sweet=1 sour=2 spicy=3;
 
 
 #chinese
-preserved_meat_with_rice_in_hot_pot,Chinese,0,0,0
-hot_and_sour_soup,Chinese,1,1,2&3
-chicken_sweet_corn_coup,Chinese,1,0,1
-wonton_soup,Chinese,0,0,0
-deep_fried_shrimp_balls,Chinese,1,0,0
-baby_bok_choy,Chinese,1,1,0
-ma_po_tofu,Chinese,1,1,3
-sweet_and_sour_pork,Chinese,1,0,1&2
-steamed_pork_spare_ribs_in_black_bean_sauce,Chinese,1,0,0
-bbq_pork_slice,Chinese,1,0,1
-general_tso's_chicken,Chinese,1,0,1&2&3
-kung_pao_chicken,Chinese,1,0,3
-fried_oyster_pancake,Chinese,1,0,0
-chow_mein,Chinese,0,0/1,0
-noodle_soup,Chinese,0,0/1,0
+preserved meat with rice in hot pot,Chinese,0,0,0
+hot and sour soup,Chinese,1,1,2&3
+chicken sweet corn coup,Chinese,1,0,1
+wonton soup,Chinese,0,0,0
+deep fried shrimp balls,Chinese,1,0,0
+baby bok choy,Chinese,1,1,0
+mapo tofu,Chinese,1,1,3
+sweet and sour pork,Chinese,1,0,1&2
+steamed pork spare ribs in black bean sauce,Chinese,1,0,0
+bbq pork slice,Chinese,1,0,1
+general tso's chicken,Chinese,1,0,1&2&3
+kung pao chicken,Chinese,1,0,3
+fried oyster pancake,Chinese,1,0,0
+chow mein,Chinese,0,0/1,0
+noodle soup,Chinese,0,0/1,0
 congee,Chinese,0,0/1,0
-
+rice noodle roll,Chinese,1,0/1,0
