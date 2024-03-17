@@ -5,13 +5,13 @@ Module Description
 ==================
 This module contains the Tree class and various methods and functions.
 
-Copyright and Usage Information
 ===============================
 
 his file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
-import csv
 from __future__ import annotations
+
+import csv
 from typing import Any, Optional
 from python_ta.contracts import check_contracts
 
@@ -111,7 +111,7 @@ if __name__ == '__main__':
     # (In PyCharm, select the lines below and press Ctrl/Cmd + / to toggle comments.)
     # You can use "Run file in Python Console" to run both pytest and PythonTA,
     # and then also test your methods manually in the console.
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120
-    })
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 120
+    # })
