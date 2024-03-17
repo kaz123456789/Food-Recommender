@@ -1,10 +1,19 @@
 ,FoodType,DishType,Vegan/NonVegan,Flavor
-bibimbap,Korean,0,0,0/3
-bulgogi,Korean,1,0,3
-pancake,Korean,1,0/1,0/3
-pork_bone_soup,Korean,0,0,0/3
-black_bean_sauce_noodle,Korean,0,0/1,0
-cold_noodle,Korean,0,0/1,0/3
+bibimbap,East Asia,0,0,0&3
+bulgogi,East Asia,1,0,3
+pancake,East Asia,1,0&1,0&3
+pork bone soup,East Asia,0,0,0&3
+black bean sauce noodle,East Asia,0,0&1,0
+cold noodle,East Asia,0,0&1,0&3
+tangsuyuk,East Asia,1,0,1&2
+
+fried spring roll,South Asia,1,0&1,0
+vietnamese noodle soup,South Asiae,0,0,0
+seafood laksa noodle,South Asia,0,0,0
+tom yum gong noodle,South Asia,0,0,0
+
+
+
 
 (main=0, side=1, dessert=2;
 non-vegan=0, vegan=1;
@@ -28,4 +37,3 @@ fried_oyster_pancake,Chinese,1,0,0
 chow_mein,Chinese,0,0/1,0
 noodle_soup,Chinese,0,0/1,0
 congee,Chinese,0,0/1,0
-
