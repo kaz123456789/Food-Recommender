@@ -1,1 +1,11 @@
-hihi
+,FoodType,DishType,vegan,flavor
+bibimbap,Korean,0,0,0/3
+bulgogi,Korean,1,0,3
+pancake,Korean,1,0/1,0/3
+pork_bone_soup,Korean,0,0,0/3
+black_bean_sauce_noodle,Korean,0,0/1,0
+cold_noodle,Korean,0,0/1,0/3
+
+(main=0, side=1, dessrt=2;
+non-vegan=0, vegan=1;
+savory=0 sweet=1 sour=2 spicy=3;
