@@ -6,23 +6,23 @@ pork bone soup,Korean,0,0,0/3
 black bean sauce noodle,Korean,0,0/1,0
 cold noodle,Korean,0,0/1,0/3
 
-(main=0, side=1, dessert=2;
+main=0, side=1, dessert=2;
 non-vegan=0, vegan=1;
-savory=0 sweet=1 sour=2 spicy=3;
+savory=0, sweet=1, sour=2, spicy=3;
+boiling=0, pan-fried=1, deep-fried=2, grilled=3, baked=4
 
 
 #chinese
 preserved meat with rice in hot pot,Chinese,0,0,0
-hot and sour soup,Chinese,1,1,2&3
+hot and sour soup,Chinese,1,1,2/3
 chicken sweet corn coup,Chinese,1,0,1
 wonton soup,Chinese,0,0,0
 deep fried shrimp balls,Chinese,1,0,0
 baby bok choy,Chinese,1,1,0
 mapo tofu,Chinese,1,1,3
-sweet and sour pork,Chinese,1,0,1&2
+sweet and sour pork,Chinese,1,0,1/2
 steamed pork spare ribs in black bean sauce,Chinese,1,0,0
 bbq pork slice,Chinese,1,0,1
-general tso's chicken,Chinese,1,0,1&2&3
 kung pao chicken,Chinese,1,0,3
 fried oyster pancake,Chinese,1,0,0
 chow mein,Chinese,0,0/1,0
