@@ -30,8 +30,9 @@ class _Vertex:
         - all(self in u.neighbours for u in self.neighbours)
     """
     name: Any
-    kind: str
-    price: int
+    category: str
+    address: str
+    price_range: str
     latitude: float
     longitude: float
     review_rate: float
@@ -66,12 +67,15 @@ class Graph:
     _vertices: dict[Any, _Vertex]
 
     def __init__(self) -> None:
-        """Initialize an empty graph (no vertices or edges)."""
+        """
+        Initialize an empty graph (no vertices or edges).
+        """
         self._vertices = {}
 
     def add_vertex(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
                    review_rate: float) -> None:
-        """Add a vertex with the given restaurant details to this graph.
+        """
+        Add a vertex with the given restaurant details to this graph.
         The new vertex is not adjacent to any other vertices.
         Do nothing if the given restaurant is already in this graph.
         """
@@ -79,8 +83,10 @@ class Graph:
             self._vertices[name] = _Vertex(category, address, name, price_range, latitude, longitude, review_rate)
 
     def add_edge(self, name1: Any, name2: Any) -> None:
-        """Add an edge between the two vertices with the given restaurant names in this graph.
+        """
+        Add an edge between the two vertices with the given restaurant names in this graph.
         Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
+
         Preconditions:
             - name1 != name2
         """
@@ -94,8 +100,9 @@ class Graph:
             raise ValueError
 
     def adjacent(self, name1: Any, name2: Any) -> bool:
-        """Return whether name1 and name2 are adjacent vertices in this graph.
-        Return False if name1 or name2 do not appear as vertices in this graph.
+        """
+        Return whether name1 and name2 are adjacent vertices in this graph.
+        Return False if either name1 or name2 do not appear as vertices in this graph.
         """
         if name1 in self._vertices and name2 in self._vertices:
             v1 = self._vertices[name1]
@@ -104,7 +111,8 @@ class Graph:
             return False
 
     def get_neighbours(self, name: Any) -> set:
-        """Return a set of the neighbours of the given name.
+        """
+        Return a set of the neighbours of the given name.
         Note that the *names* are returned, not the _Vertex objects themselves.
         Raise a ValueError if name does not appear as a vertex in this graph.
         """
@@ -114,12 +122,13 @@ class Graph:
         else:
             raise ValueError
 
-    def get_all_vertices(self, kind: str = '') -> set:
-        """Return a set of all vertex names in this graph.
-        If kind != '', only return the items of the given vertex kind.
+    def get_all_vertices(self, category: str = '') -> set:
         """
-        if kind != '':
-            return {v.name for v in self._vertices.values() if v.kind == kind}
+        Return a set of all vertex names in this graph.
+        If category != '', only return the items of the given vertex kind.
+        """
+        if category != '':
+            return {v.name for v in self._vertices.values() if v.category == category}
         else:
             return set(self._vertices.keys())
 
@@ -131,11 +140,13 @@ class Graph:
         """
         graph_nx = nx.Graph()
         for v in self._vertices.values():
-            graph_nx.add_node(v.name, kind=v.kind, price=v.price, latitude=v.latitute, longitude=v.longitude)
+            graph_nx.add_node(v.name, category=v.category, price_range=v.price_range,
+                              latitude=v.latitude, longitude=v.longitude)
 
             for u in v.neighbours:
                 if graph_nx.number_of_nodes() < max_vertices:
-                    graph_nx.add_node(u.name, kind=u.kind, price=u.price, latitude=u.latitute, longitude=u.longitude)
+                    graph_nx.add_node(u.name, category=u.category, price_range=u.price_range,
+                                      latitude=u.latitude, longitude=u.longitude)
 
                 if u.name in graph_nx.nodes:
                     graph_nx.add_edge(v.name, u.name)
@@ -145,21 +156,153 @@ class Graph:
 
         return graph_nx
 
-    def load_graph(self, rest_file: str) -> Graph:
+
+class _RatingVertex(_Vertex):
+    """A vertex in a weighted book review graph, used to represent a user or a book.
+
+    Same documentation as _Vertex from Exercise 3, except now neighbours is a dictionary mapping
+    a neighbour vertex to the weight of the edge to from self to that neighbour.
+    Note that for this exercise, the weights will be integers between 1 and 5.
+
+    Instance Attributes:
+        - item: The data stored in this vertex, representing a user or book.
+        - kind: The type of this vertex: 'user' or 'book'.
+        - neighbours: The vertices that are adjacent to this vertex, and their corresponding
+            edge weights.
+
+    Representation Invariants:
+        - self not in self.neighbours
+        - all(self in u.neighbours for u in self.neighbours)
+        - self.kind in {'user', 'book'}
+    """
+    name: Any
+    category: str
+    address: str
+    price_range: str
+    latitude: float
+    longitude: float
+    review_rate: float
+    neighbours: dict[_RatingVertex, str]
+
+    def __init__(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
+                 review_rate: float) -> None:
+        """Initialize a new vertex with the given item and kind.
+
+        This vertex is initialized with no neighbours.
+
+        Preconditions:
+            - kind in {'user', 'book'}
+        """
+        super().__init__(name, address, category, price_range, latitude, longitude, review_rate)
+        self.neighbours = {}
+
+
+class RatingGraph(Graph):
+    """A weighted graph used to represent a book review network that keeps track of review scores.
+
+    Note that this is a subclass of the Graph class from Exercise 3, and so inherits any methods
+    from that class that aren't overridden here.
+    """
+    # Private Instance Attributes:
+    #     - _vertices:
+    #         A collection of the vertices contained in this graph.
+    #         Maps item to _WeightedVertex object.
+    _vertices: dict[Any, _RatingVertex]
+
+    def __init__(self) -> None:
+        """Initialize an empty graph (no vertices or edges)."""
+        self._vertices = {}
+
+        # This call isn't necessary, except to satisfy PythonTA.
+        Graph.__init__(self)
+
+    def add_vertex(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
+                   review_rate: float) -> None:
+        """Add a vertex with the given item and kind to this graph.
+
+        The new vertex is not adjacent to any other vertices.
+        Do nothing if the given item is already in this graph.
+
+        Preconditions:
+            - kind in {'user', 'book'}
+        """
+        if name not in self._vertices:
+            self._vertices[name] = _RatingVertex(category, address, name, price_range, latitude, longitude, review_rate)
+
+    def add_edge(self, item1: Any, item2: Any, category: str = '') -> None:
+        """Add an edge between the two vertices with the given items in this graph,
+        with the given weight.
+
+        Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
+
+        Preconditions:
+            - item1 != item2
+        """
+        if item1 in self._vertices and item2 in self._vertices:
+            v1 = self._vertices[item1]
+            v2 = self._vertices[item2]
+
+            # Add the new edge
+            v1.neighbours[v2] = category
+            v2.neighbours[v1] = category
+        else:
+            # We didn't find an existing vertex for both items.
+            raise ValueError
+
+    def get_category(self, item1: Any, item2: Any) -> str:
+        """Return the category of the edge between the given items.
+
+        Raise ValueError if two vertices have different categories.
+
+        Preconditions:
+            - item1 and item2 are vertices in this graph
+        """
+        v1_category = self._vertices[item1].category
+        v2_category = self._vertices[item2].category
+        if v1_category == v2_category:
+            return v1_category
+        raise ValueError
+
+    def to_networkx(self, max_vertices: int = 5000) -> nx.Graph:
+        """Convert this graph into a networkx Graph.
+
+        max_vertices specifies the maximum number of vertices that can appear in the graph.
+        (This is necessary to limit the visualization output for large graphs.)
+
+        Note that this method is provided for you, and you shouldn't change it.
+        """
+        graph_nx = nx.Graph()
+        for v in self._vertices.values():
+            graph_nx.add_node(v.name, category=v.category)
+
+            for u in v.neighbours.keys():
+                if graph_nx.number_of_nodes() < max_vertices:
+                    graph_nx.add_node(u.name, category=u.category)
+
+                if u.name in graph_nx.nodes:
+                    if v.category == u.category:
+                        graph_nx.add_edge(v.name, u.name, category=v.neighbours[u])
+
+            if graph_nx.number_of_nodes() >= max_vertices:
+                break
+
+        return graph_nx
+
+    def load_graph(self, rest_file: str) -> RatingGraph:
         """Return a restaurant graph corresponding to the given datasets.
 
         The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
         'Restaurant Price Range', 'Restaurant Latitude', 'Restaurant Longitude'
         and 'Review Rates'.
         """
-        graph = Graph()
+        graph = RatingGraph()
 
         with open(rest_file, 'r') as file:
             next(file)
             reader = csv.reader(file)
             for row in reader:
                 category, address, name, price_range, latitude, longitude, review_rate = row
-                price_min, price_max = map(int, price_range.replace('$', '').split('-'))
+                price_min, prilce_max = map(int, price_range.replace('$', '').split('-'))
                 latitude = float(latitude)
                 longitude = float(longitude)
                 review_rate = float(review_rate)
@@ -221,9 +364,35 @@ class Graph:
         lat, lon = map(float, location_response.get('loc', '0,0').split(','))
         return lat, lon
 
-    def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> List[_Vertex]:
+    def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) ->\
+            list[_Vertex]:
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
-            if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance, user_lat, user_lon):
+            if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance, 
+                                                                                  user_lat, user_lon):
                 qualifying_restaurants.append(restaurant)
         return qualifying_restaurants
+
+
+if __name__ == '__main__':
+    # You can uncomment the following lines for code checking/debugging purposes.
+    # However, we recommend commenting out these lines when working with the large
+    # datasets, as checking representation invariants and preconditions greatly
+    # increases the running time of the functions/methods.
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
+
+    import doctest
+
+    doctest.testmod()
+
+    import python_ta
+
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['E1136', 'W0221'],
+        'extra-imports': ['csv', 'networkx'],
+        'allowed-io': ['load_weighted_review_graph'],
+        'max-nested-blocks': 4
+    })
+    
