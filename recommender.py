@@ -20,11 +20,19 @@ from math import radians, sin, cos, sqrt, atan2
 
 class _Vertex:
     """A vertex in a restaurant graph, used to represent a restaurant.
-    Each vertex item is either a restaurant name..
+    Each vertex item is either a restaurant name.
+
     Instance Attributes:
-        - item: The data stored in this vertex, representing a user or book.
-        - kind: The type of this vertex: ''.
+        - name: The data stored in this vertex, representing the name of the restaurant.
+        - category: The region of the restaurant (i.e. Chinese, Japanese...)
+        - address: The address of the restaurant.
+        - price_range: A range of price of the restaurant.
+        - latitude: The latitude of the restaurant on the Earth
+        - longitude: The longitude of the restaurant on the Earth.
+        - review_rate: A rate range from 0 to 5 of the restaurant.
+        0 means the restaurant sucks and 5 means the restaurant is fantastic.
         - neighbours: The vertices that are adjacent to this vertex.
+
     Representation Invariants:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
@@ -40,7 +48,9 @@ class _Vertex:
 
     def __init__(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
                  review_rate: float) -> None:
-        """Initialize a new vertex with the given item and kind.
+        """
+        Initialize a new vertex with the given name, category, address, price_range,
+        latitude, longitude, review_rate, neighbours.
         This vertex is initialized with no neighbours.
         """
         self.category = category
