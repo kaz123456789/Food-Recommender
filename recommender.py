@@ -157,7 +157,7 @@ class Graph:
         return graph_nx
 
 
-class _RatingVertex(_Vertex):
+class _CategoryVertex(_Vertex):
     """A vertex in a weighted book review graph, used to represent a user or a book.
 
     Same documentation as _Vertex from Exercise 3, except now neighbours is a dictionary mapping
@@ -182,7 +182,7 @@ class _RatingVertex(_Vertex):
     latitude: float
     longitude: float
     review_rate: float
-    neighbours: dict[_RatingVertex, str]
+    neighbours: dict[_CategoryVertex, str]
 
     def __init__(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
                  review_rate: float) -> None:
@@ -197,7 +197,7 @@ class _RatingVertex(_Vertex):
         self.neighbours = {}
 
 
-class RatingGraph(Graph):
+class CategoryGraph(Graph):
     """A weighted graph used to represent a book review network that keeps track of review scores.
 
     Note that this is a subclass of the Graph class from Exercise 3, and so inherits any methods
@@ -207,7 +207,7 @@ class RatingGraph(Graph):
     #     - _vertices:
     #         A collection of the vertices contained in this graph.
     #         Maps item to _WeightedVertex object.
-    _vertices: dict[Any, _RatingVertex]
+    _vertices: dict[Any, _CategoryVertex]
 
     def __init__(self) -> None:
         """Initialize an empty graph (no vertices or edges)."""
@@ -227,7 +227,7 @@ class RatingGraph(Graph):
             - kind in {'user', 'book'}
         """
         if name not in self._vertices:
-            self._vertices[name] = _RatingVertex(category, address, name, price_range, latitude, longitude, review_rate)
+            self._vertices[name] = _CategoryVertex(category, address, name, price_range, latitude, longitude, review_rate)
 
     def add_edge(self, item1: Any, item2: Any, category: str = '') -> None:
         """Add an edge between the two vertices with the given items in this graph,
@@ -288,14 +288,14 @@ class RatingGraph(Graph):
 
         return graph_nx
 
-    def load_graph(self, rest_file: str) -> RatingGraph:
+    def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
 
         The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
         'Restaurant Price Range', 'Restaurant Latitude', 'Restaurant Longitude'
         and 'Review Rates'.
         """
-        graph = RatingGraph()
+        graph = CategoryGraph()
 
         with open(rest_file, 'r') as file:
             next(file)
@@ -321,7 +321,7 @@ class RatingGraph(Graph):
             for row in reader:
                 valid_cuisines.add(row[0])
 
-        print("Please enter your preferred type of cuisine: ")
+        print("Please enter your preferred type of cuisine (Chinese, Korean etc.): ")
         print(f"Options: {', '.join(valid_cuisines)}")
         desired_cuisine = input().strip()
 
@@ -368,7 +368,7 @@ class RatingGraph(Graph):
             list[_Vertex]:
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
-            if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance, 
+            if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance,
                                                                                   user_lat, user_lon):
                 qualifying_restaurants.append(restaurant)
         return qualifying_restaurants
@@ -395,4 +395,3 @@ if __name__ == '__main__':
         'allowed-io': ['load_weighted_review_graph'],
         'max-nested-blocks': 4
     })
-    
