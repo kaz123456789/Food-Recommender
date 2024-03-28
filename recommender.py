@@ -7,13 +7,15 @@ This module contains the Tree class and various methods and functions.
 
 ===============================
 
-his file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
+This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
 from __future__ import annotations
 import csv
 from typing import Any
 
 import networkx as nx
+import requests
+from math import radians, sin, cos, sqrt, atan2
 
 
 class _Vertex:
@@ -165,3 +167,63 @@ class Graph:
                 graph.add_vertex(category, address, name, price_range, latitude, longitude, review_rate)
 
         return graph
+
+    def get_user_preference(self, file_name: str) -> str:
+        """Ask the user for their preferred type of cuisine and return it."""
+        valid_cuisines = set()
+
+        with open(file_name, 'r') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                valid_cuisines.add(row[0])
+
+        print("Please enter your preferred type of cuisine: ")
+        print(f"Options: {', '.join(valid_cuisines)}")
+        desired_cuisine = input().strip()
+
+        if desired_cuisine in valid_cuisines:
+            return desired_cuisine
+        else:
+            print(f"Invalid input. Please choose from the available options.")
+            return self.get_user_preference(file_name)
+
+    def is_within_distance(self, restaurant: _Vertex, user_lat: float, user_lon: float, max_distance: float) -> bool:
+        """
+        Determine if the restaurant is within the maximum distance from the user's location.
+        """
+        return self.calculate_distance(user_lat, user_lon, restaurant.latitude, restaurant.longitude) <= max_distance
+
+    @staticmethod
+    def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+        """
+        Calculate the distance between two points on the earth specified in decimal degrees.
+        """
+        r = 6371.0  # Earth radius in kilometers
+
+        d_lat = radians(lat2 - lat1)
+        d_lon = radians(lon2 - lon1)
+        a = sin(d_lat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        distance = r * c
+        return distance
+
+    @staticmethod
+    def get_location_from_ip() -> tuple[float, float]:
+        """
+        Retrieve the current location (latitude and longitude) based on the public IP address of the user.
+        """
+        response = requests.get('https://api64.ipify.org?format=json').json()
+        ip_address = response['ip']
+
+        location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
+        lat, lon = map(float, location_response.get('loc', '0,0').split(','))
+        return lat, lon
+
+    def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> List[_Vertex]:
+        qualifying_restaurants = []
+        for restaurant in self._vertices.values():
+            if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance, user_lat, user_lon):
+                qualifying_restaurants.append(restaurant)
+        return qualifying_restaurants
