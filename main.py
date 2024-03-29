@@ -14,4 +14,3 @@ from recommender import CategoryGraph
 if __name__ == "__main__":
     g = CategoryGraph()
     graph = CategoryGraph.load_graph(g, "filtered_restaurant_full.csv")
-    print(graph.get_vertex('Beijing Sung'))
