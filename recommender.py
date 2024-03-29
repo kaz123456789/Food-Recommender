@@ -208,16 +208,23 @@ class CategoryGraph(Graph):
 
     def add_vertex(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
                    review_rate: float) -> None:
-        """Add a vertex with the given item and kind to this graph.
+        """Add a vertex with the given attibutes to this graph.
+
+        The new vertex is not adjacent to any other vertices.
+        Do nothing if the given item is already in this graph.
+        """
+        if name not in self._vertices:
+            self._vertices[name] = _CategoryVertex(category, address, name, price_range, location, review_rate)
+
+    def add_whole_vertex(self, v: Any, vertex: _CategoryVertex) -> None:
+        """Add a WHOLE/exisiting vertex to this graph.
 
         The new vertex is not adjacent to any other vertices.
         Do nothing if the given item is already in this graph.
 
-        Preconditions:
-            - kind in {'user', 'book'}
         """
-        if name not in self._vertices:
-            self._vertices[name] = _CategoryVertex(category, address, name, price_range, location, review_rate)
+        if v not in self._vertices:
+            self._vertices[v] = vertex
 
     def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
         """Add an edge between the two vertices with the given items in this graph,
@@ -238,21 +245,6 @@ class CategoryGraph(Graph):
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
-
-    # def get_category(self, name1: Any) -> str:
-    #     """Return the category of the edge between the given items.
-    #
-    #     Raise ValueError if two vertices have different categories.
-    #
-    #     Preconditions:
-    #         - item1 and item2 are vertices in this graph
-    #     """
-    #     return self._vertices[name1].category
-    #     # v1_category = self._vertices[name1].category
-    #     # v2_category = self._vertices[name2].category
-    #     # if v1_category == v2_category:
-    #     #     return v1_category
-    #     # raise ValueError
 
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
@@ -310,8 +302,8 @@ class CategoryGraph(Graph):
         """
         Run the recommender and print the answer
         """
-        resturants_type = {'Chinese', 'fast food', 'Italian', 'Japanese', 'Indian',
-                           'American', 'Thai', 'Mexican', 'Korean', 'Vietnamese', 'vegan', 'French'}
+        restaurants_type = {'Chinese', 'fast food', 'Italian', 'Japanese', 'Indian',
+                            'American', 'Thai', 'Mexican', 'Korean', 'Vietnamese', 'vegan', 'French'}
 
         rest_questions = ['What is your preferred type of cuisine (Chinese, Korean etc.)?',
                           'What the the maximum distance are you looking for (in km)?',
@@ -319,6 +311,28 @@ class CategoryGraph(Graph):
 
         user_input = self.get_user_input(rest_questions, resturants_type)
 
+
+    def selected_category(self, category: str) -> CategoryGraph:
+        """
+        Create a copy of the original graph by only keeping the restaurant that
+        have the same category according to the user input. The edge that connects
+        each vertex is the shared category.
+        """
+        g = CategoryGraph()
+        for v in self._vertices:
+            if v.category == category:
+                g.add_vertex(v.category, v.address, v.name, v.price_range, v.location, v.review_rate)
+
+    def filter_price(self, price_range: int) -> CategoryGraph:
+        """
+        Return a new CategoryGraph with vertices that matches the given price range.
+        """
+        g = CategoryGraph()
+        for v in self._vertices:
+            vertex = self._vertices[v]
+            if vertex.price_range == price_range:
+                g.add_whole_vertex(v, vertex)
+        return g
 
     def is_within_distance(self, restaurant: _Vertex, user_lat: float, user_lon: float, max_distance: float) -> bool:
         """
