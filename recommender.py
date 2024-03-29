@@ -97,21 +97,23 @@ class Graph:
         if name not in self._vertices:
             self._vertices[name] = _Vertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, name1: Any, name2: Any) -> None:
+    def add_edge(self, item1: Any, item2: Any, similarity_score: float) -> None:
         """
-        Add an edge between the two vertices with the given restaurant names in this graph.
-        Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
-
+        Add an edge with a similarity score between the two vertices with the given items in this graph.
+    
+        Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
+    
         Preconditions:
-            - name1 != name2
+            - item1 != item2
         """
-        if name1 in self._vertices and name2 in self._vertices:
-            v1 = self._vertices[name1]
-            v2 = self._vertices[name2]
-
-            v1.neighbours.add(v2)
-            v2.neighbours.add(v1)
+        if item1 in self._vertices and item2 in self._vertices:
+            v1 = self._vertices[item1]
+            v2 = self._vertices[item2]
+    
+            v1.neighbours[v2] = similarity_score
+            v2.neighbours[v1] = similarity_score
         else:
+            # If either vertex is not in the graph, raise an error
             raise ValueError
 
     def adjacent(self, name1: Any, name2: Any) -> bool:
@@ -264,20 +266,6 @@ class CategoryGraph(Graph):
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
-
-    def add_similarity_edges(self) -> None:
-        """For each pair of vertices in the graph, calculate their similarity score and
-        add an edge with that score if it has a high similarity score(>0.5).
-        """
-        vertices_list = list(self._vertices.items())
-        for i in range(len(vertices_list)):
-            name1, vertex1 = vertices_list[i]
-            for j in range(i + 1, len(vertices_list)):
-                name2, vertex2 = vertices_list[j]
-
-                similarity_score = vertex1.similarity_score(vertex2)
-                if similarity_score > 0.5:
-                    self.add_edge(name1, name2, str(similarity_score))
                     
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
