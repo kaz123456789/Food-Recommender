@@ -50,7 +50,7 @@ class _Vertex:
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: set[_Vertex]
+    neighbours: dict[_Vertex, float]
 
     def __init__(self, category: str, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
@@ -65,7 +65,7 @@ class _Vertex:
         self.price_range = price_range
         self.review_rate = review_rate
         self.location = location
-        self.neighbours = set()
+        self.neighbours = {}
 
     def degree(self) -> int:
         """Return the degree of this vertex."""
@@ -186,6 +186,25 @@ class _CategoryVertex(_Vertex):
         super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
 
+    def similarity_score(self, other: _Vertex) -> float:
+        """Calculate the similarity score between this vertex and another vertex."""
+        similarity = 0.0
+
+        # compare cuisine type (weight 50%)
+        if self.category == other.category:
+            similarity += 0.5
+
+        # compare price range (weight 30%)
+        if self.price_range == other.price_range:
+            similarity += 0.3
+
+        # compare review rate (weight 20%)
+        rating_difference = abs(self.review_rate - other.review_rate)
+        review_similarity = 1 - (rating_difference / 5)
+        similarity += 0.2 * review_similarity
+
+        return similarity
+
 
 class CategoryGraph(Graph):
     """A weighted graph used to represent a book review network that keeps track of review scores.
@@ -226,7 +245,7 @@ class CategoryGraph(Graph):
         if v not in self._vertices:
             self._vertices[v] = vertex
 
-    def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
+     def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -246,6 +265,20 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
+    def add_similarity_edges(self) -> None:
+        """For each pair of vertices in the graph, calculate their similarity score and
+        add an edge with that score if it has a high similarity score(>0.5).
+        """
+        vertices_list = list(self._vertices.items())
+        for i in range(len(vertices_list)):
+            name1, vertex1 = vertices_list[i]
+            for j in range(i + 1, len(vertices_list)):
+                name2, vertex2 = vertices_list[j]
+
+                similarity_score = vertex1.similarity_score(vertex2)
+                if similarity_score > 0.5:
+                    self.add_edge(name1, name2, str(similarity_score))
+                    
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
 
@@ -275,6 +308,8 @@ class CategoryGraph(Graph):
         answer_so_far = []
 
         print(questions[0])
+        print('(Available options: Chinese, Fast food, Italian, American, '
+              'Thai, Mexican, Korean, Vietnamese, Vegan, or French)')
         ans1 = input('Your answer: ')
         while ans1.lower() not in rest_types:
             print('This is not a valid option, please enter another answer:')
@@ -303,10 +338,10 @@ class CategoryGraph(Graph):
         Run the recommender and print the answer
         """
         restaurants_type = {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'fhai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
 
-        rest_questions = ['What is your preferred type of cuisine (Chinese, Korean etc.)?',
-                          'What the the maximum distance are you looking for (in km)?',
+        rest_questions = ['What is your preferred type of cuisine?',
+                          'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
 
         user_input = self.get_user_input(rest_questions, restaurants_type)
