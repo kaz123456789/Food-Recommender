@@ -174,7 +174,7 @@ class _CategoryVertex(_Vertex):
     review_rate: float
     neighbours: dict[_CategoryVertex, str]
 
-    def __init__(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
+    def __init__(self, category: str, address: str, name: Any, price_range: str, location: tuple[float, float],
                  review_rate: float) -> None:
         """Initialize a new vertex with the given item and kind.
 
@@ -239,20 +239,20 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
-    def get_category(self, name1: Any) -> str:
-        """Return the category of the edge between the given items.
-
-        Raise ValueError if two vertices have different categories.
-
-        Preconditions:
-            - item1 and item2 are vertices in this graph
-        """
-        return self._vertices[name1].category
-        # v1_category = self._vertices[name1].category
-        # v2_category = self._vertices[name2].category
-        # if v1_category == v2_category:
-        #     return v1_category
-        # raise ValueError
+    # def get_category(self, name1: Any) -> str:
+    #     """Return the category of the edge between the given items.
+    #
+    #     Raise ValueError if two vertices have different categories.
+    #
+    #     Preconditions:
+    #         - item1 and item2 are vertices in this graph
+    #     """
+    #     return self._vertices[name1].category
+    #     # v1_category = self._vertices[name1].category
+    #     # v2_category = self._vertices[name2].category
+    #     # if v1_category == v2_category:
+    #     #     return v1_category
+    #     # raise ValueError
 
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
@@ -277,25 +277,48 @@ class CategoryGraph(Graph):
 
         return graph
 
-    def get_user_preference(self, file_name: str) -> str:
-        """Ask the user for their preferred type of cuisine and return it."""
-        valid_cuisines = set()
+    def get_user_input(self, questions: list[str], rest_types: set[str]) -> list[str | int]:
+        """ Return a list of answers the user input."""
 
-        with open(file_name, 'r') as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                valid_cuisines.add(row[0])
+        answer_so_far = []
 
-        print("Please enter your preferred type of cuisine (Chinese, Korean etc.): ")
-        print(f"Options: {', '.join(valid_cuisines)}")
-        desired_cuisine = input().strip()
+        print(questions[0])
+        ans1 = input('Your answer: ')
+        while ans1.lower not in rest_types:
+            print('This is not a valid option, please enter another answer:')
+            ans1 = input('Your answer: ')
+        answer_so_far.append(ans1)
 
-        if desired_cuisine in valid_cuisines:
-            return desired_cuisine
-        else:
-            print(f"Invalid input. Please choose from the available options.")
-            return self.get_user_preference(file_name)
+        print(questions[2])
+        ans2 = input('Your answer: ')
+        while not ans2.isdigit():
+            print('This is not a number, please enter a correct distance:')
+            ans2 = input('Your answer: ')
+        answer_so_far.append(int(ans2))
+
+        print(questions[3])
+        print('Enter 1 for under $10, 2 for $11-30, 3 for $31-60, or 4 for above $60')
+        ans3 = input('Your answer: ')
+        while ans3 not in {1, 2, 3, 4}:
+            print('This is not a valid option, please enter another answer:')
+            ans3 = input('Your answer: ')
+        answer_so_far.append(int(ans3))
+
+        return answer_so_far
+
+    def run_recommender(self) -> None:
+        """
+        Run the recommender and print the answer
+        """
+        resturants_type = {'Chinese', 'fast food', 'Italian', 'Japanese', 'Indian',
+                           'American', 'Thai', 'Mexican', 'Korean', 'Vietnamese', 'vegan', 'French'}
+
+        rest_questions = ['What is your preferred type of cuisine (Chinese, Korean etc.)?',
+                          'What the the maximum distance are you looking for (in km)?',
+                          'What price range are you looking for?']
+
+        user_input = self.get_user_input(rest_questions, resturants_type)
+
 
     def is_within_distance(self, restaurant: _Vertex, user_lat: float, user_lon: float, max_distance: float) -> bool:
         """
@@ -313,7 +336,7 @@ class CategoryGraph(Graph):
 
         d_lat = radians(lat2 - lat1)
         d_lon = radians(lon2 - lon1)
-        a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2)**2
+        a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         distance = r * c
@@ -331,7 +354,7 @@ class CategoryGraph(Graph):
         lat, lon = map(float, location_response.get('loc', '0,0').split(','))
         return lat, lon
 
-    def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) ->\
+    def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> \
             list[_Vertex]:
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
