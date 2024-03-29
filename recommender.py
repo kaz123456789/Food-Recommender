@@ -298,7 +298,7 @@ class CategoryGraph(Graph):
 
         return answer_so_far
 
-    def run_recommender(self) -> None:
+    def run_recommender(self) -> list[str]:
         """
         Run the recommender and print the answer
         """
@@ -309,41 +309,26 @@ class CategoryGraph(Graph):
                           'What the the maximum distance are you looking for (in km)?',
                           'What price range are you looking for?']
 
-        user_input = self.get_user_input(rest_questions, resturants_type)
+        user_input = self.get_user_input(rest_questions, restaurants_type)
+        category, distance_range, price_range = user_input
+        player_lat, player_lon = self.get_location_from_ip()
+        new_graph = self.filtered_graph(category, player_lat, player_lon, distance_range, price_range)
+        recommend_restaurants = [res.name for res in new_graph._vertices]
+        return recommend_restaurants
 
-    def filter_by_price(self, price_range: int) -> CategoryGraph:
+    def filtered_graph(self, category: str, user_lat: float, user_lon: float, max_distance: float, price: int) \
+            -> CategoryGraph:
         """
-        Return a new CategoryGraph with vertices that matches the given price range.
+        Return a new CategoryGraph with vertices that matches the given category,
+        price range, and maximum distance.
         """
         g = CategoryGraph()
         for v in self._vertices:
             vertex = self._vertices[v]
-            if vertex.price_range == price_range:
+            if (int(vertex.price_range) == price and vertex.category == category and
+                    self.is_within_distance(vertex, user_lat, user_lon, max_distance)):
                 g.add_whole_vertex(v, vertex)
         return g
-
-    def filter_by_category(self, category: str) -> CategoryGraph:
-        """
-        Create a copy of the original graph by only keeping the restaurant that
-        have the same category according to the user input. The edge that connects
-        each vertex is the shared category.
-        """
-        g = CategoryGraph()
-        for v in self._vertices:
-            vertex = self._vertices[v]
-            if vertex.category == category:
-                g.add_whole_vertex(v, vertex)
-        return g
-
-    def filter_by_distance(self, user_lat: float, user_lon: float, max_distance: float) -> CategoryGraph:
-        """Filter out the restaurants that are outside the accepted distance.
-        """
-        new_graph = CategoryGraph()
-        for v in self._vertices:
-            vertex = self._vertices[v]
-            if self.is_within_distance(vertex, user_lat, user_lon, max_distance):
-                new_graph.add_whole_vertex(v, vertex)
-        return new_graph
 
     def is_within_distance(self, restaurant: _CategoryVertex, user_lat: float, user_lon: float, max_distance: float) \
             -> bool:
