@@ -48,12 +48,12 @@ class _Vertex:
     address: str
     name: Any
     price_range: str
-    location: tuple[float, float]
     review_rate: float
+    location: tuple[float, float]
     neighbours: set[_Vertex]
 
-    def __init__(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
-                 review_rate: float) -> None:
+    def __init__(self, category: str, address: str, name: str, location: tuple[float, float],
+                 price_range: str, review_rate: float) -> None:
         """
         Initialize a new vertex with the given name, category, address, price_range,
         location, review_rate, neighbours.
@@ -63,8 +63,8 @@ class _Vertex:
         self.address = address
         self.name = name
         self.price_range = price_range
-        self.location = location
         self.review_rate = review_rate
+        self.location = location
         self.neighbours = set()
 
     def degree(self) -> int:
@@ -87,15 +87,15 @@ class Graph:
         """
         self._vertices = {}
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
-                   review_rate: float) -> None:
+    def add_vertex(self, category: str, address: str, name: str, price_range: str,
+                   review_rate: float, location: tuple[float, float]) -> None:
         """
         Add a vertex with the given restaurant details to this graph.
         The new vertex is not adjacent to any other vertices.
         Do nothing if the given restaurant is already in this graph.
         """
         if name not in self._vertices:
-            self._vertices[name] = _Vertex(category, address, name, price_range, location, review_rate)
+            self._vertices[name] = _Vertex(category, address, name, price_range, review_rate, location)
 
     def add_edge(self, name1: Any, name2: Any) -> None:
         """
@@ -183,7 +183,7 @@ class _CategoryVertex(_Vertex):
         Preconditions:
             - kind in {'user', 'book'}
         """
-        super().__init__(category, address, name, price_range, location, review_rate)
+        super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
 
 
@@ -258,7 +258,7 @@ class CategoryGraph(Graph):
             reader = csv.reader(file)
             next(reader, None)  # Skip the header row
             for row in reader:
-                category, address, name, price_range, loc, review_rate = row
+                category, address, name, price_range, review_rate, loc = row
                 # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
                 location = tuple(float(val.strip()) for val in loc.split(','))
                 latitude = safe_float_convert(location[0], default_value=None)
@@ -266,7 +266,7 @@ class CategoryGraph(Graph):
                 location = (latitude, longitude)
                 review_rate = safe_float_convert(review_rate, default_value=None)
 
-                graph.add_vertex(category, address, name, price_range, location, review_rate)
+                graph.add_vertex(category, address, name, price_range, review_rate, location)
 
         return graph
     
