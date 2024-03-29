@@ -18,6 +18,14 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 
 
+def safe_float_convert(input_str: str, default_value=None):
+    """Attempt to convert a string to a float. Return a default value if the conversion fails."""
+    try:
+        return float(input_str)
+    except ValueError:
+        return default_value
+    
+
 class _Vertex:
     """A vertex in a restaurant graph, used to represent a restaurant.
     Each vertex item is either a restaurant name.
@@ -282,15 +290,15 @@ class CategoryGraph(Graph):
         """
         graph = CategoryGraph()
 
-        with open(rest_file, 'r') as file:
-            next(file)
+        with open(rest_file, 'r', encoding='cp1252') as file:  # Assuming CP1252 encoding
             reader = csv.reader(file)
+            next(reader, None)  # Skip the header row
             for row in reader:
                 category, address, name, price_range, latitude, longitude, review_rate = row
-                price_min, prilce_max = map(int, price_range.replace('$', '').split('-'))
-                latitude = float(latitude)
-                longitude = float(longitude)
-                review_rate = float(review_rate)
+                # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
+                latitude = safe_float_convert(latitude, default_value=None)  # Or another default value as appropriate
+                longitude = safe_float_convert(longitude, default_value=None)
+                review_rate = safe_float_convert(review_rate, default_value=None)
 
                 graph.add_vertex(category, address, name, price_range, latitude, longitude, review_rate)
 
