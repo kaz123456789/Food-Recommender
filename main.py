@@ -11,7 +11,9 @@ This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting 
 """
 from recommender import CategoryGraph
 
-
 if __name__ == "__main__":
     g = CategoryGraph()
     graph = CategoryGraph.load_graph(g, "filtered_restaurant_dt.csv")
+
+    print("Welcome!This is the food recommender FOODER. ")
+    print(CategoryGraph.run_recommender(graph))
