@@ -47,13 +47,13 @@ class _Vertex:
     category: str
     address: str
     name: Any
-    price_range: str
+    price_range: int
     review_rate: float
     location: tuple[float, float]
     neighbours: set[_Vertex]
 
-    def __init__(self, category: str, address: str, name: str, location: tuple[float, float],
-                 price_range: str, review_rate: float) -> None:
+    def __init__(self, category: str, address: str, name: str,
+                 price_range: int, review_rate: float, location: tuple[float, float]) -> None:
         """
         Initialize a new vertex with the given name, category, address, price_range,
         location, review_rate, neighbours.
@@ -87,7 +87,7 @@ class Graph:
         """
         self._vertices = {}
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: str,
+    def add_vertex(self, category: str, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
         """
         Add a vertex with the given restaurant details to this graph.
@@ -169,13 +169,13 @@ class _CategoryVertex(_Vertex):
     category: str
     address: str
     name: Any
-    price_range: str
-    location: tuple[float, float]
+    price_range: int
     review_rate: float
+    location: tuple[float, float]
     neighbours: dict[_CategoryVertex, str]
 
-    def __init__(self, category: str, address: str, name: Any, price_range: str, location: tuple[float, float],
-                 review_rate: float) -> None:
+    def __init__(self, category: str, address: str, name: Any, price_range: int,
+                 review_rate: float, location: tuple[float, float]) -> None:
         """Initialize a new vertex with the given item and kind.
 
         This vertex is initialized with no neighbours.
@@ -206,18 +206,18 @@ class CategoryGraph(Graph):
         # This call isn't necessary, except to satisfy PythonTA.
         Graph.__init__(self)
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
-                   review_rate: float) -> None:
-        """Add a vertex with the given attibutes to this graph.
+    def add_vertex(self, category: str, address: str, name: str, price_range: int,
+                   review_rate: float, location: tuple[float, float]) -> None:
+        """Add a vertex with the given attributes to this graph.
 
         The new vertex is not adjacent to any other vertices.
         Do nothing if the given item is already in this graph.
         """
         if name not in self._vertices:
-            self._vertices[name] = _CategoryVertex(category, address, name, price_range, location, review_rate)
+            self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
     def add_whole_vertex(self, v: Any, vertex: _CategoryVertex) -> None:
-        """Add a WHOLE/exisiting vertex to this graph.
+        """Add a WHOLE/exiting vertex to this graph.
 
         The new vertex is not adjacent to any other vertices.
         Do nothing if the given item is already in this graph.
@@ -261,10 +261,9 @@ class CategoryGraph(Graph):
                 category, address, name, price_range, review_rate, loc = row
                 # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
                 location = tuple(float(val.strip()) for val in loc.split(','))
-                latitude = safe_float_convert(location[0], default_value=None)
-                longitude = safe_float_convert(location[1], default_value=None)
+                latitude = float(location[0])
+                longitude = float(location[1])
                 location = (latitude, longitude)
-                review_rate = safe_float_convert(review_rate, default_value=None)
 
                 graph.add_vertex(category, address, name, price_range, review_rate, location)
 
