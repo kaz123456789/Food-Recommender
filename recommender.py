@@ -13,7 +13,6 @@ from __future__ import annotations
 import csv
 from typing import Any
 
-import networkx as nx
 import requests
 from math import radians, sin, cos, sqrt, atan2
 
@@ -45,9 +44,9 @@ class _Vertex:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
     """
-    name: Any
     category: str
     address: str
+    name: Any
     price_range: str
     location: tuple[float, float]
     review_rate: float
@@ -167,9 +166,9 @@ class _CategoryVertex(_Vertex):
         - all(self in u.neighbours for u in self.neighbours)
         - self.kind in {'user', 'book'}
     """
-    name: Any
     category: str
     address: str
+    name: Any
     price_range: str
     location: tuple[float, float]
     review_rate: float
@@ -184,7 +183,7 @@ class _CategoryVertex(_Vertex):
         Preconditions:
             - kind in {'user', 'book'}
         """
-        super().__init__(name, address, category, price_range, location, review_rate)
+        super().__init__(category, address, name, price_range, location, review_rate)
         self.neighbours = {}
 
 
@@ -240,7 +239,7 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
-    def get_category(self, name1: Any, name2: Any) -> str:
+    def get_category(self, name1: Any) -> str:
         """Return the category of the edge between the given items.
 
         Raise ValueError if two vertices have different categories.
@@ -248,11 +247,12 @@ class CategoryGraph(Graph):
         Preconditions:
             - item1 and item2 are vertices in this graph
         """
-        v1_category = self._vertices[name1].category
-        v2_category = self._vertices[name2].category
-        if v1_category == v2_category:
-            return v1_category
-        raise ValueError
+        return self._vertices[name1].category
+        # v1_category = self._vertices[name1].category
+        # v2_category = self._vertices[name2].category
+        # if v1_category == v2_category:
+        #     return v1_category
+        # raise ValueError
 
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
@@ -266,10 +266,10 @@ class CategoryGraph(Graph):
             reader = csv.reader(file)
             next(reader, None)  # Skip the header row
             for row in reader:
-                category, address, name, price_range, location, review_rate = row
+                category, address, name, price_range, latitude, longitude, review_rate = row
                 # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
-                latitude = safe_float_convert(location[0], default_value=None)
-                longitude = safe_float_convert(location[1], default_value=None)
+                latitude = safe_float_convert(latitude, default_value=None)
+                longitude = safe_float_convert(longitude, default_value=None)
                 location = (latitude, longitude)
                 review_rate = safe_float_convert(review_rate, default_value=None)
 
