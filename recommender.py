@@ -374,6 +374,18 @@ class CategoryGraph(Graph):
                 qualifying_restaurants.append(restaurant)
         return qualifying_restaurants
 
+    def rating(self, rest: list[str], likes: list[int]) -> None:
+        """
+        Mutates the graph based on the likes and dislikes the user inputed.
+        This will help the recommender generate a more accurate answer next time based
+        on user's preference on the resturants.
+        """
+        for i in range(len(likes)):
+            if not likes[i]:
+                self._vertices[rest[i]] -= 0.2
+            else:
+                self._vertices[rest[i]] -= 0.2
+
 
 if __name__ == '__main__':
     # You can uncomment the following lines for code checking/debugging purposes.
