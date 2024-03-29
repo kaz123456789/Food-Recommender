@@ -269,7 +269,7 @@ class CategoryGraph(Graph):
                 graph.add_vertex(category, address, name, price_range, location, review_rate)
 
         return graph
-    
+
     def get_user_input(self, questions: list[str], rest_types: set[str]) -> list[str | int]:
         """ Return a list of answers the user input."""
 
@@ -316,6 +316,12 @@ class CategoryGraph(Graph):
         new_graph = self.filtered_graph(category, player_lat, player_lon, distance_range, price_range)
         recommend_restaurants = [res.name for res in new_graph._vertices]
         return recommend_restaurants
+
+    def get_rest_address(self, name: str) -> str:
+        """
+        Return the address of the input resturant.
+        """
+        return self._vertices[name].address
 
     def filtered_graph(self, category: str, user_lat: float, user_lon: float, max_distance: float, price: int) \
             -> CategoryGraph:
@@ -375,7 +381,7 @@ class CategoryGraph(Graph):
                 qualifying_restaurants.append(restaurant)
         return qualifying_restaurants
 
-    def rest_likes(self, rest: list[str], rates: list[int]) -> None:
+    def rating(self, rest: list[str], rates: list[int]) -> None:
         """
         Mutates the graph based on the likes and dislikes the user inputed.
         This will help the recommender generate a more accurate answer next time based
@@ -386,16 +392,6 @@ class CategoryGraph(Graph):
                 self._vertices[rest[i]] -= 0.2
             else:
                 self._vertices[rest[i]] += 0.2
-
-    def rating(self, lst_of_rest: list[str]) -> None:
-        """
-        Ask the user to rate
-        """
-        rate_so_far = []
-        input = True
-        print('Are you satisfies with this result?')
-        input = ('Y/N: ')
-        print('')
 
 
 if __name__ == '__main__':
