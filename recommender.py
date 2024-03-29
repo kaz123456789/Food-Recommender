@@ -276,22 +276,22 @@ class CategoryGraph(Graph):
 
         print(questions[0])
         ans1 = input('Your answer: ')
-        while ans1.lower not in rest_types:
+        while ans1.lower() not in rest_types:
             print('This is not a valid option, please enter another answer:')
             ans1 = input('Your answer: ')
         answer_so_far.append(ans1)
 
-        print(questions[2])
+        print(questions[1])
         ans2 = input('Your answer: ')
         while not ans2.isdigit():
             print('This is not a number, please enter a correct distance:')
             ans2 = input('Your answer: ')
         answer_so_far.append(int(ans2))
 
-        print(questions[3])
-        print('Enter 1 for under $10, 2 for $11-30, 3 for $31-60, or 4 for above $60')
+        print(questions[2])
+        print('Enter 1 for under $10, 2 for $11-30, 3 for $31-60, or 4 for above $61')
         ans3 = input('Your answer: ')
-        while ans3 not in {1, 2, 3, 4}:
+        while ans3 not in {'1', '2', '3', '4'}:
             print('This is not a valid option, please enter another answer:')
             ans3 = input('Your answer: ')
         answer_so_far.append(int(ans3))
@@ -302,8 +302,8 @@ class CategoryGraph(Graph):
         """
         Run the recommender and print the answer
         """
-        restaurants_type = {'Chinese', 'fast food', 'Italian', 'Japanese', 'Indian',
-                            'American', 'Thai', 'Mexican', 'Korean', 'Vietnamese', 'vegan', 'French'}
+        restaurants_type = {'chinese', 'fast food', 'italian', 'japanese', 'indian',
+                            'american', 'fhai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
 
         rest_questions = ['What is your preferred type of cuisine (Chinese, Korean etc.)?',
                           'What the the maximum distance are you looking for (in km)?',
@@ -331,7 +331,7 @@ class CategoryGraph(Graph):
         g = CategoryGraph()
         for v in self._vertices:
             vertex = self._vertices[v]
-            if (int(vertex.price_range) == price and vertex.category == category and
+            if (vertex.price_range == price and vertex.category == category and
                     self.is_within_distance(vertex, user_lat, user_lon, max_distance)):
                 g.add_whole_vertex(v, vertex)
         return g
