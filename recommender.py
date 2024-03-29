@@ -18,13 +18,13 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 
 
-def safe_float_convert(input_str: str, default_value=None):
+def safe_float_convert(input_str: str, default_value: None) -> float | None:
     """Attempt to convert a string to a float. Return a default value if the conversion fails."""
     try:
         return float(input_str)
     except ValueError:
         return default_value
-    
+
 
 class _Vertex:
     """A vertex in a restaurant graph, used to represent a restaurant.
@@ -35,8 +35,8 @@ class _Vertex:
         - category: The region of the restaurant (i.e. Chinese, Japanese...)
         - address: The address of the restaurant.
         - price_range: A range of price of the restaurant.
-        - latitude: The latitude of the restaurant on the Earth
-        - longitude: The longitude of the restaurant on the Earth.
+        - location: The location of the restaurant as a tuple where the first parameter is the latitude
+        and the second parameter is the longitude
         - review_rate: A rate range from 0 to 5 of the restaurant.
         0 means the restaurant sucks and 5 means the restaurant is fantastic.
         - neighbours: The vertices that are adjacent to this vertex.
@@ -49,24 +49,22 @@ class _Vertex:
     category: str
     address: str
     price_range: str
-    latitude: float
-    longitude: float
+    location: tuple[float, float]
     review_rate: float
     neighbours: set[_Vertex]
 
-    def __init__(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
+    def __init__(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
                  review_rate: float) -> None:
         """
         Initialize a new vertex with the given name, category, address, price_range,
-        latitude, longitude, review_rate, neighbours.
+        location, review_rate, neighbours.
         This vertex is initialized with no neighbours.
         """
         self.category = category
         self.address = address
         self.name = name
         self.price_range = price_range
-        self.latitude = latitude
-        self.longitude = longitude
+        self.location = location
         self.review_rate = review_rate
         self.neighbours = set()
 
@@ -90,7 +88,7 @@ class Graph:
         """
         self._vertices = {}
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
+    def add_vertex(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
                    review_rate: float) -> None:
         """
         Add a vertex with the given restaurant details to this graph.
@@ -98,7 +96,7 @@ class Graph:
         Do nothing if the given restaurant is already in this graph.
         """
         if name not in self._vertices:
-            self._vertices[name] = _Vertex(category, address, name, price_range, latitude, longitude, review_rate)
+            self._vertices[name] = _Vertex(category, address, name, price_range, location, review_rate)
 
     def add_edge(self, name1: Any, name2: Any) -> None:
         """
@@ -150,30 +148,6 @@ class Graph:
         else:
             return set(self._vertices.keys())
 
-    def to_networkx(self, max_vertices: int = 5000) -> nx.Graph:
-        """Convert this graph into a networkx Graph.
-        max_vertices specifies the maximum number of vertices that can appear in the graph.
-        (This is necessary to limit the visualization output for large graphs.)
-        Note that this method is provided for you, and you shouldn't change it.
-        """
-        graph_nx = nx.Graph()
-        for v in self._vertices.values():
-            graph_nx.add_node(v.name, category=v.category, price_range=v.price_range,
-                              latitude=v.latitude, longitude=v.longitude)
-
-            for u in v.neighbours:
-                if graph_nx.number_of_nodes() < max_vertices:
-                    graph_nx.add_node(u.name, category=u.category, price_range=u.price_range,
-                                      latitude=u.latitude, longitude=u.longitude)
-
-                if u.name in graph_nx.nodes:
-                    graph_nx.add_edge(v.name, u.name)
-
-            if graph_nx.number_of_nodes() >= max_vertices:
-                break
-
-        return graph_nx
-
 
 class _CategoryVertex(_Vertex):
     """A vertex in a weighted book review graph, used to represent a user or a book.
@@ -197,12 +171,11 @@ class _CategoryVertex(_Vertex):
     category: str
     address: str
     price_range: str
-    latitude: float
-    longitude: float
+    location: tuple[float, float]
     review_rate: float
     neighbours: dict[_CategoryVertex, str]
 
-    def __init__(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
+    def __init__(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
                  review_rate: float) -> None:
         """Initialize a new vertex with the given item and kind.
 
@@ -211,7 +184,7 @@ class _CategoryVertex(_Vertex):
         Preconditions:
             - kind in {'user', 'book'}
         """
-        super().__init__(name, address, category, price_range, latitude, longitude, review_rate)
+        super().__init__(name, address, category, price_range, location, review_rate)
         self.neighbours = {}
 
 
@@ -234,7 +207,7 @@ class CategoryGraph(Graph):
         # This call isn't necessary, except to satisfy PythonTA.
         Graph.__init__(self)
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: str, latitude: float, longitude: float,
+    def add_vertex(self, category: str, address: str, name: str, price_range: str, location: tuple[float, float],
                    review_rate: float) -> None:
         """Add a vertex with the given item and kind to this graph.
 
@@ -245,9 +218,9 @@ class CategoryGraph(Graph):
             - kind in {'user', 'book'}
         """
         if name not in self._vertices:
-            self._vertices[name] = _CategoryVertex(category, address, name, price_range, latitude, longitude, review_rate)
+            self._vertices[name] = _CategoryVertex(category, address, name, price_range, location, review_rate)
 
-    def add_edge(self, item1: Any, item2: Any, category: str = '') -> None:
+    def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -256,9 +229,9 @@ class CategoryGraph(Graph):
         Preconditions:
             - item1 != item2
         """
-        if item1 in self._vertices and item2 in self._vertices:
-            v1 = self._vertices[item1]
-            v2 = self._vertices[item2]
+        if name1 in self._vertices and name2 in self._vertices:
+            v1 = self._vertices[name1]
+            v2 = self._vertices[name2]
 
             # Add the new edge
             v1.neighbours[v2] = category
@@ -267,7 +240,7 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
-    def get_category(self, item1: Any, item2: Any) -> str:
+    def get_category(self, name1: Any, name2: Any) -> str:
         """Return the category of the edge between the given items.
 
         Raise ValueError if two vertices have different categories.
@@ -275,8 +248,8 @@ class CategoryGraph(Graph):
         Preconditions:
             - item1 and item2 are vertices in this graph
         """
-        v1_category = self._vertices[item1].category
-        v2_category = self._vertices[item2].category
+        v1_category = self._vertices[name1].category
+        v2_category = self._vertices[name2].category
         if v1_category == v2_category:
             return v1_category
         raise ValueError
@@ -285,8 +258,7 @@ class CategoryGraph(Graph):
         """Return a restaurant graph corresponding to the given datasets.
 
         The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
-        'Restaurant Price Range', 'Restaurant Latitude', 'Restaurant Longitude'
-        and 'Review Rates'.
+        'Restaurant Price Range', 'Restaurant Location' and 'Review Rates'.
         """
         graph = CategoryGraph()
 
@@ -294,13 +266,14 @@ class CategoryGraph(Graph):
             reader = csv.reader(file)
             next(reader, None)  # Skip the header row
             for row in reader:
-                category, address, name, price_range, latitude, longitude, review_rate = row
+                category, address, name, price_range, location, review_rate = row
                 # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
-                latitude = safe_float_convert(latitude, default_value=None)  # Or another default value as appropriate
-                longitude = safe_float_convert(longitude, default_value=None)
+                latitude = safe_float_convert(location[0], default_value=None)
+                longitude = safe_float_convert(location[1], default_value=None)
+                location = (latitude, longitude)
                 review_rate = safe_float_convert(review_rate, default_value=None)
 
-                graph.add_vertex(category, address, name, price_range, latitude, longitude, review_rate)
+                graph.add_vertex(category, address, name, price_range, location, review_rate)
 
         return graph
 
@@ -328,7 +301,8 @@ class CategoryGraph(Graph):
         """
         Determine if the restaurant is within the maximum distance from the user's location.
         """
-        return self.calculate_distance(user_lat, user_lon, restaurant.latitude, restaurant.longitude) <= max_distance
+        return self.calculate_distance(user_lat, user_lon,
+                                       restaurant.location[0], restaurant.location[1]) <= max_distance
 
     @staticmethod
     def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
