@@ -275,6 +275,8 @@ class CategoryGraph(Graph):
         answer_so_far = []
 
         print(questions[0])
+        print('(Available options: Chinese, Fast food, Italian, American, '
+              'Thai, Mexican, Korean, Vietnamese, Vegan, or French)')
         ans1 = input('Your answer: ')
         while ans1.lower() not in rest_types:
             print('This is not a valid option, please enter another answer:')
@@ -303,10 +305,10 @@ class CategoryGraph(Graph):
         Run the recommender and print the answer
         """
         restaurants_type = {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'fhai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
 
-        rest_questions = ['What is your preferred type of cuisine (Chinese, Korean etc.)?',
-                          'What the the maximum distance are you looking for (in km)?',
+        rest_questions = ['What is your preferred type of cuisine?',
+                          'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
 
         user_input = self.get_user_input(rest_questions, restaurants_type)
