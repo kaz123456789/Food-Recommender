@@ -258,17 +258,18 @@ class CategoryGraph(Graph):
             reader = csv.reader(file)
             next(reader, None)  # Skip the header row
             for row in reader:
-                category, address, name, price_range, latitude, longitude, review_rate = row
+                category, address, name, price_range, loc, review_rate = row
                 # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
-                latitude = safe_float_convert(latitude, default_value=None)
-                longitude = safe_float_convert(longitude, default_value=None)
+                location = tuple(float(val.strip()) for val in loc.split(','))
+                latitude = safe_float_convert(location[0], default_value=None)
+                longitude = safe_float_convert(location[1], default_value=None)
                 location = (latitude, longitude)
                 review_rate = safe_float_convert(review_rate, default_value=None)
 
                 graph.add_vertex(category, address, name, price_range, location, review_rate)
 
         return graph
-
+    
     def get_user_input(self, questions: list[str], rest_types: set[str]) -> list[str | int]:
         """ Return a list of answers the user input."""
 
