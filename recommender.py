@@ -50,7 +50,7 @@ class _Vertex:
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_Vertex, float]
+    neighbours: set[_Vertex]
 
     def __init__(self, category: str, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
@@ -65,7 +65,7 @@ class _Vertex:
         self.price_range = price_range
         self.review_rate = review_rate
         self.location = location
-        self.neighbours = {}
+        self.neighbours = set()
 
     def degree(self) -> int:
         """Return the degree of this vertex."""
@@ -100,16 +100,26 @@ class Graph:
     def add_edge(self, item1: Any, item2: Any, similarity_score: float) -> None:
         """
         Add an edge with a similarity score between the two vertices with the given items in this graph.
+<<<<<<< Updated upstream
     
         Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
     
+=======
+
+        Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
+
+>>>>>>> Stashed changes
         Preconditions:
             - item1 != item2
         """
         if item1 in self._vertices and item2 in self._vertices:
             v1 = self._vertices[item1]
             v2 = self._vertices[item2]
+<<<<<<< Updated upstream
     
+=======
+
+>>>>>>> Stashed changes
             v1.neighbours[v2] = similarity_score
             v2.neighbours[v1] = similarity_score
         else:
@@ -188,25 +198,6 @@ class _CategoryVertex(_Vertex):
         super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
 
-    def similarity_score(self, other: _Vertex) -> float:
-        """Calculate the similarity score between this vertex and another vertex."""
-        similarity = 0.0
-
-        # compare cuisine type (weight 50%)
-        if self.category == other.category:
-            similarity += 0.5
-
-        # compare price range (weight 30%)
-        if self.price_range == other.price_range:
-            similarity += 0.3
-
-        # compare review rate (weight 20%)
-        rating_difference = abs(self.review_rate - other.review_rate)
-        review_similarity = 1 - (rating_difference / 5)
-        similarity += 0.2 * review_similarity
-
-        return similarity
-
 
 class CategoryGraph(Graph):
     """A weighted graph used to represent a book review network that keeps track of review scores.
@@ -247,7 +238,7 @@ class CategoryGraph(Graph):
         if v not in self._vertices:
             self._vertices[v] = vertex
 
-     def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
+    def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -266,7 +257,11 @@ class CategoryGraph(Graph):
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
+<<<<<<< Updated upstream
                     
+=======
+
+>>>>>>> Stashed changes
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
 
