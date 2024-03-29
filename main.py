@@ -11,6 +11,7 @@ This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting 
 """
 from recommender import CategoryGraph
 
+
 if __name__ == "__main__":
     g = CategoryGraph()
     graph = CategoryGraph.load_graph(g, "filtered_restaurant_full.csv")
