@@ -311,6 +311,17 @@ class CategoryGraph(Graph):
 
         user_input = self.get_user_input(rest_questions, resturants_type)
 
+    def filter_price(self, price_range: int) -> CategoryGraph:
+        """
+        Return a new CategoryGraph with vertices that matches the given price range.
+        """
+        g = CategoryGraph()
+        for v in self._vertices:
+            vertex = self._vertices[v]
+            if vertex.price_range == price_range:
+                g.add_whole_vertex(v, vertex)
+        return g
+
 
     def selected_category(self, category: str) -> CategoryGraph:
         """
