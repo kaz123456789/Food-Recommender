@@ -45,9 +45,9 @@ class _Vertex:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
     """
-    name: Any
     category: str
     address: str
+    name: Any
     price_range: str
     location: tuple[float, float]
     review_rate: float
@@ -167,9 +167,9 @@ class _CategoryVertex(_Vertex):
         - all(self in u.neighbours for u in self.neighbours)
         - self.kind in {'user', 'book'}
     """
-    name: Any
     category: str
     address: str
+    name: Any
     price_range: str
     location: tuple[float, float]
     review_rate: float
@@ -184,7 +184,7 @@ class _CategoryVertex(_Vertex):
         Preconditions:
             - kind in {'user', 'book'}
         """
-        super().__init__(name, address, category, price_range, location, review_rate)
+        super().__init__(category, address, name, price_range, location, review_rate)
         self.neighbours = {}
 
 
