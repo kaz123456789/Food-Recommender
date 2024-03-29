@@ -273,31 +273,6 @@ class CategoryGraph(Graph):
             return v1_category
         raise ValueError
 
-    def to_networkx(self, max_vertices: int = 5000) -> nx.Graph:
-        """Convert this graph into a networkx Graph.
-
-        max_vertices specifies the maximum number of vertices that can appear in the graph.
-        (This is necessary to limit the visualization output for large graphs.)
-
-        Note that this method is provided for you, and you shouldn't change it.
-        """
-        graph_nx = nx.Graph()
-        for v in self._vertices.values():
-            graph_nx.add_node(v.name, category=v.category)
-
-            for u in v.neighbours.keys():
-                if graph_nx.number_of_nodes() < max_vertices:
-                    graph_nx.add_node(u.name, category=u.category)
-
-                if u.name in graph_nx.nodes:
-                    if v.category == u.category:
-                        graph_nx.add_edge(v.name, u.name, category=v.neighbours[u])
-
-            if graph_nx.number_of_nodes() >= max_vertices:
-                break
-
-        return graph_nx
-
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
 
@@ -356,7 +331,7 @@ class CategoryGraph(Graph):
 
         d_lat = radians(lat2 - lat1)
         d_lon = radians(lon2 - lon1)
-        a = sin(d_lat / 2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2)**2
+        a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2)**2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         distance = r * c
