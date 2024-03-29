@@ -311,7 +311,7 @@ class CategoryGraph(Graph):
 
         user_input = self.get_user_input(rest_questions, resturants_type)
 
-    def filter_price(self, price_range: int) -> CategoryGraph:
+    def filter_by_price(self, price_range: int) -> CategoryGraph:
         """
         Return a new CategoryGraph with vertices that matches the given price range.
         """
@@ -322,8 +322,7 @@ class CategoryGraph(Graph):
                 g.add_whole_vertex(v, vertex)
         return g
 
-
-    def selected_category(self, category: str) -> CategoryGraph:
+    def filter_by_category(self, category: str) -> CategoryGraph:
         """
         Create a copy of the original graph by only keeping the restaurant that
         have the same category according to the user input. The edge that connects
@@ -331,21 +330,23 @@ class CategoryGraph(Graph):
         """
         g = CategoryGraph()
         for v in self._vertices:
-            if v.category == category:
-                g.add_vertex(v.category, v.address, v.name, v.price_range, v.location, v.review_rate)
-
-    def filter_price(self, price_range: int) -> CategoryGraph:
-        """
-        Return a new CategoryGraph with vertices that matches the given price range.
-        """
-        g = CategoryGraph()
-        for v in self._vertices:
             vertex = self._vertices[v]
-            if vertex.price_range == price_range:
+            if vertex.category == category:
                 g.add_whole_vertex(v, vertex)
         return g
 
-    def is_within_distance(self, restaurant: _Vertex, user_lat: float, user_lon: float, max_distance: float) -> bool:
+    def filter_by_distance(self, user_lat: float, user_lon: float, max_distance: float) -> CategoryGraph:
+        """Filter out the restaurants that are outside the accepted distance.
+        """
+        new_graph = CategoryGraph()
+        for v in self._vertices:
+            vertex = self._vertices[v]
+            if self.is_within_distance(vertex, user_lat, user_lon, max_distance):
+                new_graph.add_whole_vertex(v, vertex)
+        return new_graph
+
+    def is_within_distance(self, restaurant: _CategoryVertex, user_lat: float, user_lon: float, max_distance: float) \
+            -> bool:
         """
         Determine if the restaurant is within the maximum distance from the user's location.
         """
@@ -380,7 +381,7 @@ class CategoryGraph(Graph):
         return lat, lon
 
     def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> \
-            list[_Vertex]:
+            list[_CategoryVertex]:
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
             if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance,
