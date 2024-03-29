@@ -240,7 +240,7 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
-    def get_category(self, name1: Any, name2: Any) -> str:
+    def get_category(self, name1: Any) -> str:
         """Return the category of the edge between the given items.
 
         Raise ValueError if two vertices have different categories.
@@ -248,11 +248,12 @@ class CategoryGraph(Graph):
         Preconditions:
             - item1 and item2 are vertices in this graph
         """
-        v1_category = self._vertices[name1].category
-        v2_category = self._vertices[name2].category
-        if v1_category == v2_category:
-            return v1_category
-        raise ValueError
+        return self._vertices[name1].category
+        # v1_category = self._vertices[name1].category
+        # v2_category = self._vertices[name2].category
+        # if v1_category == v2_category:
+        #     return v1_category
+        # raise ValueError
 
     def load_graph(self, rest_file: str) -> CategoryGraph:
         """Return a restaurant graph corresponding to the given datasets.
