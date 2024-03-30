@@ -20,32 +20,38 @@ if __name__ == "__main__":
     lst_of_rest = CategoryGraph.run_recommender(graph)
     
     print(lst_of_rest)
-    # rate_so_far = []
-    # ans = 0
-    # index = 0
-    # while ans == 0 and index < len(lst_of_rest):
-    #     if index == 0:
-    #         print(f'Based on your answers, this is the restaurant we recommend: {lst_of_rest[index]}')
-    #     else:
-    #         print('Sorry to hear that you didn\'t like the restaurant, here is another restaurant '
-    #               f'that satisfied your request: {lst_of_rest[index]}')
-    #     print('Are you satisfied with this result?')
-    #     ans = input('Y/N (Type N to get another recommendation): ')
-    #     rate_so_far.append(ans.lower() == 'y')
-    #     if ans.lower() == 'y':
-    #         ans = 1
-    #     else:
-    #         ans = 0
-    #         index += 1
-    #
-    # if index == len(lst_of_rest) - 1:
-    #     print('Sorry, we run out of the restaurants that matches with your request. You can try with'
-    #           'a different choice.')
-    #
-    # address = CategoryGraph.get_rest_address(graph, lst_of_rest[index])
-    #
-    # print('congratulations! You\'ve find your restaurant match! We hope can enjoy the food there!')
-    # print(f'Your final choice: {lst_of_rest[index]}' + '\n')
-    # print(f'The the address of the restaurant: {address}')
-    #
-    # CategoryGraph.rating(graph, lst_of_rest, rate_so_far)
+    rate_so_far = []
+    ans = 0
+    index = 0
+    while ans == 0 and index < len(lst_of_rest):
+        if index == 0:
+            print(f'Based on your answers, this is the restaurant we recommend: {lst_of_rest[index]}')
+        else:
+            print('Sorry to hear that you didn\'t like the restaurant, here is another restaurant '
+                  f'that satisfied your request: {lst_of_rest[index]}')
+        print('Are you satisfied with this result?')
+        ans = input('Y/N (Type N to get another recommendation): ')
+        rate_so_far.append(ans.lower() == 'y')
+        if ans.lower() == 'y':
+            ans = 1
+        else:
+            ans = 0
+            index += 1
+
+    if index == len(lst_of_rest) - 1:
+        print('Sorry, we run out of the restaurants that matches with your request. You can try with'
+              'a different choice.')
+
+    address = CategoryGraph.get_rest_address(graph, lst_of_rest[index])
+
+    print('congratulations! You\'ve find your restaurant match! We hope can enjoy the food there!')
+    print(f'Your final choice: {lst_of_rest[index]}' + '\n')
+    print(f'The the address of the restaurant: {address}')
+
+    CategoryGraph.rating(graph, lst_of_rest, rate_so_far)
+    
+    
+    
+    
+    
+    

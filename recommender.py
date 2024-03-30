@@ -17,12 +17,31 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 
 
-def safe_float_convert(input_str: str, default_value: None) -> float | None:
-    """Attempt to convert a string to a float. Return a default value if the conversion fails."""
-    try:
-        return float(input_str)
-    except ValueError:
-        return default_value
+def get_location_from_ip() -> tuple[float, float]:
+    """
+    Retrieve the current location (latitude and longitude) based on the public IP address of the user.
+    """
+    response = requests.get('https://api64.ipify.org?format=json').json()
+    ip_address = response['ip']
+
+    location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
+    lat, lon = map(float, location_response.get('loc', '0,0').split(','))
+    return lat, lon
+
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """
+    Calculate the distance between two points on the earth specified in decimal degrees.
+    """
+    r = 6371.0  # Earth radius in kilometers
+
+    d_lat = radians(lat2 - lat1)
+    d_lon = radians(lon2 - lon1)
+    a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = r * c
+    return distance
 
 
 class _Vertex:
@@ -192,20 +211,41 @@ class _CategoryVertex(_Vertex):
         """Calculate the similarity score between this vertex and another vertex."""
         similarity = 0.0
 
-        # compare cuisine type (weight 50%)
+        print('Sort by the factor you value from the most to the least, in order, separate by \',\'.\n'
+              'You may choose from the following: category, prince range, and maximum distance.')
+        ans3 = input('Your answer: ')
+        sorted_factors = [factor.strip() for factor in ans3.split(',')]
+        valid_factors = {'category', 'price range', 'maximum distance'}
+        while not (set(sorted_factors) == valid_factors and len(sorted_factors) == len(valid_factors)):
+            print('This is not a valid option, please enter a valid sorting of the factors:')
+            ans3 = input('Your answer: ')
+            sorted_factors = [factor.strip() for factor in ans3.split(',')]
+
+        weights = [0.5, 0.3, 0.2]  # Priority: 1st, 2nd, 3rd
+        pref_weights = {pref: weight for pref, weight in zip(preferences, weights)}
+
+        # Compare category (assuming 'category' directly maps to 'category')
         if self.category == other.category:
-            similarity += 0.5
+            similarity += pref_weights['category']
 
-        # compare price range (weight 30%)
+        # Compare price range
         if self.price_range == other.price_range:
-            similarity += 0.3
+            similarity += pref_weights['price range']
 
-        # compare review rate (weight 20%)
+        # Compare review rate (assuming this factors into 'maximum distance' for simplicity)
         rating_difference = abs(self.review_rate - other.review_rate)
-        review_similarity = 1 - (rating_difference / 5)
-        similarity += 0.2 * review_similarity
+        review_similarity = 1 - (rating_difference / 5.0)
+        similarity += pref_weights['maximum distance'] * review_similarity
 
         return similarity
+
+    def is_within_distance(self, user_lat: float, user_lon: float, max_distance: float) \
+            -> bool:
+        """
+        Determine if the restaurant is within the maximum distance from the user's location.
+        """
+        res_lat, res_lon = self.location
+        return self.calculate_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
 
 
 class CategoryGraph(Graph):
@@ -321,9 +361,10 @@ class CategoryGraph(Graph):
 
         return answer_so_far
 
-    def run_recommender(self) -> list[str]:
+    def top_restaurant(self) -> str:
         """
-        Run the recommender and print the answer
+        Run the recommender and return the top restaurant based on user preference:
+        type of cuisine, maximum acceptable distance, and the price range.
         """
         restaurants_type = {'chinese', 'fast food', 'italian', 'japanese', 'indian',
                             'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
@@ -334,86 +375,52 @@ class CategoryGraph(Graph):
 
         user_input = self.get_user_input(rest_questions, restaurants_type)
         category, distance_range, price_range = user_input
-        player_lat, player_lon = self.get_location_from_ip()
-        new_graph = self.filtered_graph(category, player_lat, player_lon, distance_range, price_range)
-        recommend_restaurants = [res.name for res in new_graph._vertices]
-        return recommend_restaurants
+        player_lat, player_lon = get_location_from_ip()
+        top_res = self.recommend_top_restaurant(category, player_lat, player_lon, distance_range, price_range)
 
-    def get_rest_address(self, name: str) -> str:
-        """
-        Return the address of the input resturant.
-        """
-        return self._vertices[name].address
+        return top_res.name
 
-    def filtered_graph(self, category: str, user_lat: float, user_lon: float, max_distance: float, price: int) \
-            -> CategoryGraph:
+    def recommend_top_restaurant(self, desired_cuisine: str, user_lat: float, user_lon: float,
+                                 max_distance: float, price: int) -> _CategoryVertex:
         """
-        Return a new CategoryGraph with vertices that matches the given category,
-        price range, and maximum distance.
+        Recommend the top restaurant (as a _CategoryVertex, not the name of the restaurant)
+        based on user location and user's preference of cuisine type, maximum acceptable distance,
+        and acceptable price range.
         """
-        g = CategoryGraph()
-        for v in self._vertices:
-            vertex = self._vertices[v]
-            if (vertex.price_range == price and vertex.category == category and
-                    self.is_within_distance(vertex, user_lat, user_lon, max_distance)):
-                g.add_whole_vertex(v, vertex)
-        return g
-
-    def is_within_distance(self, restaurant: _CategoryVertex, user_lat: float, user_lon: float, max_distance: float) \
-            -> bool:
-        """
-        Determine if the restaurant is within the maximum distance from the user's location.
-        """
-        return self.calculate_distance(user_lat, user_lon,
-                                       restaurant.location[0], restaurant.location[1]) <= max_distance
-
-    @staticmethod
-    def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        """
-        Calculate the distance between two points on the earth specified in decimal degrees.
-        """
-        r = 6371.0  # Earth radius in kilometers
-
-        d_lat = radians(lat2 - lat1)
-        d_lon = radians(lon2 - lon1)
-        a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-        distance = r * c
-        return distance
-
-    @staticmethod
-    def get_location_from_ip() -> tuple[float, float]:
-        """
-        Retrieve the current location (latitude and longitude) based on the public IP address of the user.
-        """
-        response = requests.get('https://api64.ipify.org?format=json').json()
-        ip_address = response['ip']
-
-        location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
-        lat, lon = map(float, location_response.get('loc', '0,0').split(','))
-        return lat, lon
-
-    def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> \
-            list[_CategoryVertex]:
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
-            if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance,
-                                                                                  user_lat, user_lon):
-                qualifying_restaurants.append(restaurant)
-        return qualifying_restaurants
+            if (restaurant.category == desired_cuisine
+                    and self.is_within_distance(restaurant, max_distance, user_lat, user_lon)
+                    and restaurant.price_range == price):
+                if (restaurant.review_rate, restaurant) not in qualifying_restaurants:
+                    qualifying_restaurants.append((restaurant.review_rate, restaurant))
 
-    def rating(self, rest: list[str], rates: list[int]) -> None:
+        sorted_recommendations = sorted(qualifying_restaurants, reverse=True)
+        res_recommendations = [score[1] for score in sorted_recommendations]
+
+        return res_recommendations[0]
+
+    # TBW - to be written
+    def recommend_restaurants(self, restaurant: str) -> list[str]:
+        
+
+    def modify_review_rate(self, rest: list[str], rates: list[int]) -> None:
         """
-        Mutates the graph based on the likes and dislikes the user inputed.
+        Mutates the graph based on the likes and dislikes the user inputted.
         This will help the recommender generate a more accurate answer next time based
-        on user's preference on the resturants.
+        on user's preference on the restaurants.
         """
         for i in range(len(rates)):
             if not rates[i]:
                 self._vertices[rest[i]] -= 0.2
             else:
                 self._vertices[rest[i]] += 0.2
+
+    def get_rest_address(self, name: str) -> str:
+        """
+        Return the address of the input restaurant.
+        """
+        return self._vertices[name].address
 
 
 if __name__ == '__main__':
