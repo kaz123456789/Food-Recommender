@@ -54,7 +54,7 @@ class _Vertex:
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_Vertex, float]
+    neighbours: set[_Vertex]
 
     def __init__(self, category: str, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
@@ -69,7 +69,7 @@ class _Vertex:
         self.price_range = price_range
         self.review_rate = review_rate
         self.location = location
-        self.neighbours = {}
+        self.neighbours = set()
 
     def degree(self) -> int:
         """Return the degree of this vertex."""
@@ -101,7 +101,7 @@ class Graph:
         if name not in self._vertices:
             self._vertices[name] = _Vertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, item1: Any, item2: Any, similarity_score: float) -> None:
+    def add_edge(self, item1: Any, item2: Any) -> None:
         """
         Add an edge with a similarity score between the two vertices with the given items in this graph.
 
@@ -114,10 +114,9 @@ class Graph:
             v1 = self._vertices[item1]
             v2 = self._vertices[item2]
 
-            v1.neighbours[v2] = similarity_score
-            v2.neighbours[v1] = similarity_score
+            v1.neighbours.add(v2)
+            v2.neighbours.add(v1)
         else:
-            # If either vertex is not in the graph, raise an error
             raise ValueError
 
     def adjacent(self, name1: Any, name2: Any) -> bool:
@@ -178,7 +177,7 @@ class _CategoryVertex(_Vertex):
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_CategoryVertex, str]
+    neighbours: dict[_CategoryVertex, float]
 
     def __init__(self, category: str, address: str, name: Any, price_range: int,
                  review_rate: float, location: tuple[float, float]) -> None:
@@ -241,17 +240,7 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-    def add_whole_vertex(self, v: Any, vertex: _CategoryVertex) -> None:
-        """Add a WHOLE/exiting vertex to this graph.
-
-        The new vertex is not adjacent to any other vertices.
-        Do nothing if the given item is already in this graph.
-
-        """
-        if v not in self._vertices:
-            self._vertices[v] = vertex
-
-    def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
+    def add_edge(self, name1: Any, name2: Any, similarity_score: float = 0.0) -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -265,8 +254,8 @@ class CategoryGraph(Graph):
             v2 = self._vertices[name2]
 
             # Add the new edge
-            v1.neighbours[v2] = category
-            v2.neighbours[v1] = category
+            v1.neighbours[v2] = similarity_score
+            v2.neighbours[v1] = similarity_score
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
@@ -284,7 +273,6 @@ class CategoryGraph(Graph):
             next(reader, None)  # Skip the header row
             for row in reader:
                 category, address, name, price_range, review_rate, loc = row
-                # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
                 location = tuple(float(val.strip()) for val in loc.split(','))
                 latitude = float(location[0])
                 longitude = float(location[1])
@@ -335,6 +323,7 @@ class CategoryGraph(Graph):
         rest_questions = ['What is your preferred type of cuisine?',
                           'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
+
 
     def get_rest_address(self, name: str) -> str:
         """
