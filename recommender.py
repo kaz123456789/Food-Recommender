@@ -17,12 +17,16 @@ import requests
 from math import radians, sin, cos, sqrt, atan2
 
 
-def safe_float_convert(input_str: str, default_value: None) -> float | None:
-    """Attempt to convert a string to a float. Return a default value if the conversion fails."""
-    try:
-        return float(input_str)
-    except ValueError:
-        return default_value
+def get_location_from_ip() -> tuple[float, float]:
+    """
+    Retrieve the current location (latitude and longitude) based on the public IP address of the user.
+    """
+    response = requests.get('https://api64.ipify.org?format=json').json()
+    ip_address = response['ip']
+
+    location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
+    lat, lon = map(float, location_response.get('loc', '0,0').split(','))
+    return lat, lon
 
 
 class _Vertex:
@@ -97,7 +101,7 @@ class Graph:
         if name not in self._vertices:
             self._vertices[name] = _Vertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, item1: Any, item2: Any, similarity_score: float) -> None:
+    def add_edge(self, item1: Any, item2: Any) -> None:
         """
         Add an edge with a similarity score between the two vertices with the given items in this graph.
 
@@ -110,10 +114,9 @@ class Graph:
             v1 = self._vertices[item1]
             v2 = self._vertices[item2]
 
-            v1.neighbours[v2] = similarity_score
-            v2.neighbours[v1] = similarity_score
+            v1.neighbours.add(v2)
+            v2.neighbours.add(v1)
         else:
-            # If either vertex is not in the graph, raise an error
             raise ValueError
 
     def adjacent(self, name1: Any, name2: Any) -> bool:
@@ -174,7 +177,7 @@ class _CategoryVertex(_Vertex):
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_CategoryVertex, str]
+    neighbours: dict[_CategoryVertex, float]
 
     def __init__(self, category: str, address: str, name: Any, price_range: int,
                  review_rate: float, location: tuple[float, float]) -> None:
@@ -188,6 +191,7 @@ class _CategoryVertex(_Vertex):
         super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
 
+
     def similarity_score(self, other: _Vertex) -> float:
         """Calculate the similarity score between this vertex and another vertex."""
         similarity = 0.0
@@ -200,9 +204,22 @@ class _CategoryVertex(_Vertex):
         if self.price_range == other.price_range:
             similarity += 0.3
 
+    def get_weight(self, other: _Vertex) -> float:
+        """Calculate the similarity score between this vertex and another vertex."""
+        weight = 0.0
+
+        # compare cuisine type (weight 50%)
+        if self.category == other.category:
+            weight += 0.5
+
+        # compare price range (weight 30%)
+        if self.price_range == other.price_range:
+            weight += 0.3
+
         # compare review rate (weight 20%)
         rating_difference = abs(self.review_rate - other.review_rate)
         review_similarity = 1 - (rating_difference / 5)
+
         similarity += 0.2 * review_similarity
 
         return similarity
@@ -237,6 +254,7 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
+
     def add_whole_vertex(self, v: Any, vertex: _CategoryVertex) -> None:
         """Add a WHOLE/exiting vertex to this graph.
 
@@ -247,22 +265,23 @@ class CategoryGraph(Graph):
         if v not in self._vertices:
             self._vertices[v] = vertex
 
-     def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
+
+    def add_edge(self, name1: Any, name2: Any, weight: float = 0.0) -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
         Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
 
         Preconditions:
-            - item1 != item2
+            - name1 != name2
         """
         if name1 in self._vertices and name2 in self._vertices:
             v1 = self._vertices[name1]
             v2 = self._vertices[name2]
 
             # Add the new edge
-            v1.neighbours[v2] = category
-            v2.neighbours[v1] = category
+            v1.neighbours[v2] = weight
+            v2.neighbours[v1] = weight
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
@@ -280,7 +299,6 @@ class CategoryGraph(Graph):
             next(reader, None)  # Skip the header row
             for row in reader:
                 category, address, name, price_range, review_rate, loc = row
-                # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
                 location = tuple(float(val.strip()) for val in loc.split(','))
                 latitude = float(location[0])
                 longitude = float(location[1])
@@ -332,32 +350,11 @@ class CategoryGraph(Graph):
                           'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
 
-        user_input = self.get_user_input(rest_questions, restaurants_type)
-        category, distance_range, price_range = user_input
-        player_lat, player_lon = self.get_location_from_ip()
-        new_graph = self.filtered_graph(category, player_lat, player_lon, distance_range, price_range)
-        recommend_restaurants = [res.name for res in new_graph._vertices]
-        return recommend_restaurants
-
     def get_rest_address(self, name: str) -> str:
         """
-        Return the address of the input resturant.
+        Return the address of the input restaurant.
         """
         return self._vertices[name].address
-
-    def filtered_graph(self, category: str, user_lat: float, user_lon: float, max_distance: float, price: int) \
-            -> CategoryGraph:
-        """
-        Return a new CategoryGraph with vertices that matches the given category,
-        price range, and maximum distance.
-        """
-        g = CategoryGraph()
-        for v in self._vertices:
-            vertex = self._vertices[v]
-            if (vertex.price_range == price and vertex.category == category and
-                    self.is_within_distance(vertex, user_lat, user_lon, max_distance)):
-                g.add_whole_vertex(v, vertex)
-        return g
 
     def is_within_distance(self, restaurant: _CategoryVertex, user_lat: float, user_lon: float, max_distance: float) \
             -> bool:
@@ -382,20 +379,10 @@ class CategoryGraph(Graph):
         distance = r * c
         return distance
 
-    @staticmethod
-    def get_location_from_ip() -> tuple[float, float]:
-        """
-        Retrieve the current location (latitude and longitude) based on the public IP address of the user.
-        """
-        response = requests.get('https://api64.ipify.org?format=json').json()
-        ip_address = response['ip']
-
-        location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
-        lat, lon = map(float, location_response.get('loc', '0,0').split(','))
-        return lat, lon
-
     def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> \
             list[_CategoryVertex]:
+        """Filter out the restaurants that don't meet the categories.
+        """
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
             if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance,
@@ -415,6 +402,41 @@ class CategoryGraph(Graph):
             else:
                 self._vertices[rest[i]] += 0.2
 
+    def find_recommendations(self, base_vertex_name, preferences):
+        """ Find recommended restaurants.
+        """
+        if base_vertex_name not in self._vertices:
+            return []
+
+        base_vertex = self._vertices[base_vertex_name]
+        visited, queue = set(), [base_vertex]
+        recommendations = []
+
+        while queue:
+            vertex = queue.pop(0)
+            if vertex not in visited:
+                visited.add(vertex)
+
+                # Use meets_criteria to filter vertices
+                if self.meets_criteria(vertex, preferences):
+                    recommendations.append(vertex)
+
+                    # Proceed with neighbors that meet the basic threshold of preference
+                    for neighbour, weight in vertex.neighbours.items():
+                        if weight > preferences['weight_threshold'] and neighbour not in visited:
+                            queue.append(neighbour)
+
+        return recommendations
+
+    def meets_criteria(self, vertex, preferences):
+        """Check if the restaurant's attributes match the user's preferences
+        """
+        cuisine_match = vertex.category == preferences['cuisine']
+        price_match = vertex.price_range == preferences['price_range']
+        review_match = vertex.review_rate >= preferences['min_review_rate']
+
+        return cuisine_match and price_match and review_match
+
 
 if __name__ == '__main__':
     # You can uncomment the following lines for code checking/debugging purposes.
@@ -427,13 +449,13 @@ if __name__ == '__main__':
     import doctest
 
     doctest.testmod()
-
-    import python_ta
-
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['E1136', 'W0221'],
-        'extra-imports': ['csv', 'networkx'],
-        'allowed-io': ['load_weighted_review_graph'],
-        'max-nested-blocks': 4
-    })
+    #
+    # import python_ta
+    #
+    # python_ta.check_all(config={
+    #     'max-line-length': 120,
+    #     'disable': ['E1136', 'W0221'],
+    #     'extra-imports': ['csv', 'networkx'],
+    #     'allowed-io': ['load_weighted_review_graph'],
+    #     'max-nested-blocks': 4
+    # })
