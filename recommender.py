@@ -241,7 +241,6 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-<<<<<<< HEAD
     def add_whole_vertex(self, v: Any, vertex: _CategoryVertex) -> None:
         """Add a WHOLE/exiting vertex to this graph.
 
@@ -253,9 +252,6 @@ class CategoryGraph(Graph):
             self._vertices[v] = vertex
 
     def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
-=======
-     def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
->>>>>>> 896c1f9410a5b24d2e37e741ed7a5cca11aaa466
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -339,17 +335,6 @@ class CategoryGraph(Graph):
         rest_questions = ['What is your preferred type of cuisine?',
                           'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
-<<<<<<< HEAD
-
-        user_input = self.get_user_input(rest_questions, restaurants_type)
-        category, distance_range, price_range = user_input
-        player_lat, player_lon = get_location_from_ip()
-        new_graph = self.filtered_graph(category, player_lat, player_lon, distance_range, price_range)
-        recommend_restaurants = [res.name for res in new_graph._vertices]
-        return recommend_restaurants
-=======
-        
->>>>>>> 896c1f9410a5b24d2e37e741ed7a5cca11aaa466
 
     def get_rest_address(self, name: str) -> str:
         """
