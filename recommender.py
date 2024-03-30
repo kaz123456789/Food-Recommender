@@ -191,24 +191,24 @@ class _CategoryVertex(_Vertex):
         super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
 
-    def similarity_score(self, other: _Vertex) -> float:
+    def get_weight(self, other: _Vertex) -> float:
         """Calculate the similarity score between this vertex and another vertex."""
-        similarity = 0.0
+        weight = 0.0
 
         # compare cuisine type (weight 50%)
         if self.category == other.category:
-            similarity += 0.5
+            weight += 0.5
 
         # compare price range (weight 30%)
         if self.price_range == other.price_range:
-            similarity += 0.3
+            weight += 0.3
 
         # compare review rate (weight 20%)
         rating_difference = abs(self.review_rate - other.review_rate)
         review_similarity = 1 - (rating_difference / 5)
-        similarity += 0.2 * review_similarity
+        weight += 0.2 * review_similarity
 
-        return similarity
+        return weight
 
 
 class CategoryGraph(Graph):
@@ -240,7 +240,7 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, name1: Any, name2: Any, similarity_score: float = 0.0) -> None:
+    def add_edge(self, name1: Any, name2: Any, weight: float = 0.0) -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -254,8 +254,8 @@ class CategoryGraph(Graph):
             v2 = self._vertices[name2]
 
             # Add the new edge
-            v1.neighbours[v2] = similarity_score
-            v2.neighbours[v1] = similarity_score
+            v1.neighbours[v2] = weight
+            v2.neighbours[v1] = weight
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
@@ -324,7 +324,6 @@ class CategoryGraph(Graph):
                           'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
 
-
     def get_rest_address(self, name: str) -> str:
         """
         Return the address of the input restaurant.
@@ -336,7 +335,7 @@ class CategoryGraph(Graph):
         """
         Determine if the restaurant is within the maximum distance from the user's location.
         """
-        return self.calculate_distance(user_lat, user_lon, 
+        return self.calculate_distance(user_lat, user_lon,
                                        restaurant.location[0], restaurant.location[1]) <= max_distance
 
     @staticmethod
@@ -377,6 +376,41 @@ class CategoryGraph(Graph):
             else:
                 self._vertices[rest[i]] += 0.2
 
+    def find_recommendations(self, base_vertex_name, preferences):
+        """ Find recommended restaurants.
+        """
+        if base_vertex_name not in self._vertices:
+            return []
+
+        base_vertex = self._vertices[base_vertex_name]
+        visited, queue = set(), [base_vertex]
+        recommendations = []
+
+        while queue:
+            vertex = queue.pop(0)
+            if vertex not in visited:
+                visited.add(vertex)
+
+                # Use meets_criteria to filter vertices
+                if self.meets_criteria(vertex, preferences):
+                    recommendations.append(vertex)
+
+                    # Proceed with neighbors that meet the basic threshold of preference
+                    for neighbour, weight in vertex.neighbours.items():
+                        if weight > preferences['weight_threshold'] and neighbour not in visited:
+                            queue.append(neighbour)
+
+        return recommendations
+
+    def meets_criteria(self, vertex, preferences):
+        """Check if the restaurant's attributes match the user's preferences
+        """
+        cuisine_match = vertex.category == preferences['cuisine']
+        price_match = vertex.price_range == preferences['price_range']
+        review_match = vertex.review_rate >= preferences['min_review_rate']
+
+        return cuisine_match and price_match and review_match
+
 
 if __name__ == '__main__':
     # You can uncomment the following lines for code checking/debugging purposes.
@@ -389,9 +423,9 @@ if __name__ == '__main__':
     import doctest
 
     doctest.testmod()
-    # 
+    #
     # import python_ta
-    # 
+    #
     # python_ta.check_all(config={
     #     'max-line-length': 120,
     #     'disable': ['E1136', 'W0221'],
