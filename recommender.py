@@ -391,6 +391,8 @@ class CategoryGraph(Graph):
 
     def filter_restaurants(self, max_distance: float, desired_cuisine: str, user_lat: float, user_lon: float) -> \
             list[_CategoryVertex]:
+        """Filter out the restaurants that don't meet the categories.
+        """
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
             if restaurant.category == desired_cuisine and self.is_within_distance(restaurant, max_distance,
