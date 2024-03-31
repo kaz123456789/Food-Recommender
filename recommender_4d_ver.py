@@ -248,11 +248,14 @@ class _CategoryVertex(_Vertex):
     def user_feedback(self, feedback: str) -> None:
         if feedback.lower() == 'yes':
             if self.review_rate < 3.0:
-                self.review_rate += 1.0
+                self.review_rate += 0.5
             elif self.review_rate < 5.0:
                 self.review_rate += 0.2
         else:
-            self.review_rate -= 0.2
+            if self.review_rate <= 0.5:
+                self.review_rate = 0.0
+            else:
+                self.review_rate -= 0.2
 
 
 class CategoryGraph(Graph):
