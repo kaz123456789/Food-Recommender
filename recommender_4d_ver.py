@@ -11,11 +11,14 @@ This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting 
 """
 from __future__ import annotations
 import csv
-from typing import Any, Union
+from typing import Any
 
 import requests
 import math
 import random
+
+restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+                    7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
 
 
 def get_location_from_ip() -> tuple[float, float]:
@@ -273,8 +276,7 @@ class _CategoryVertex(_Vertex):
         p2 = (other.category, other.price_range, other.review_rate,
               calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
 
-        distance = math.sqrt(((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1]) ** 2)
-                             + ((p1[2] - p2[2]) ** 2) + ((p1[3] - p2[3]) ** 2))
+        distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
         return distance
 
 
@@ -297,9 +299,9 @@ class CategoryGraph(Graph):
         # This call isn't necessary, except to satisfy PythonTA.
         Graph.__init__(self)
 
-    def vertices(self):
+    def vertices(self) -> dict:
         # This allows the outside code to read the vertices
-        return self._vertices.values()
+        return self._vertices
 
     def add_vertex(self, category: int, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
@@ -349,8 +351,8 @@ class CategoryGraph(Graph):
         Run the recommender and return the top restaurant based on user preference:
         type of cuisine, maximum acceptable distance, and the price range.
         """
-        restaurants_type = {'american', 'chinese', 'fast food', 'french', 'indian', 'italian',
-                            'japanese', 'korean', 'mexican', 'thai', 'vegan', 'vietnamese'}
+        restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+                            7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
 
         rest_questions = ['What is your preferred type of cuisine?',
                           'What is the maximum distance of restaurants you are looking for (in km)?',
@@ -454,7 +456,8 @@ def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int
     return answer_so_far
 
 
-# Load the graph of all the restaurants, where the edge is either category or price range.
+# Load the graph of all the restaurants, where each restaurant is connected to
+# the rest of the restaurants by the .
 def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
@@ -468,7 +471,6 @@ def load_graph(rest_file: str) -> CategoryGraph:
         next(reader, None)  # Skip the header row
         for row in reader:
             category, address, name, price_range, review_rate, loc = row
-            # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
             location = tuple(float(val.strip()) for val in loc.split(','))
             latitude = float(location[0])
             longitude = float(location[1])
@@ -476,6 +478,13 @@ def load_graph(rest_file: str) -> CategoryGraph:
             review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
+
+    vertex_names = list(graph.vertices().keys())
+    for i, name1 in enumerate(vertex_names):
+        for name2 in vertex_names[i + 1:]:  # Avoid connecting a vertex with itself and duplicate edges
+            if name1 != name2:  # Additional check to avoid self-loop, might be redundant
+                edge_weight = graph.calculate_edge(graph.vertices[name1], graph.vertices[name2])
+                graph.add_edge(name1, name2, edge_weight)
 
     return graph
 
