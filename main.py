@@ -9,7 +9,7 @@ This the main file of our project.
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
-from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_user_input, get_location_from_ip
+from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_location_from_ip
 import csv
 
 read_lines = []
