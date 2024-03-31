@@ -241,7 +241,10 @@ class _CategoryVertex(_Vertex):
         distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
         return distance
 
-    def user_feedback(self, feedback: str) -> None:
+    def calculate_user_feedback(self, feedback: str) -> None:
+        """
+        Calculate the user feedback.
+        """
         if feedback.lower() == 'yes':
             if self.review_rate < 3.0:
                 self.review_rate += 0.5
@@ -394,15 +397,16 @@ class User:
         self.disliked_restaurants = set()
 
     def feedback_on_last_visit(self, is_satisfied: bool) -> None:
-        """Ask user if they are satisfied with the last visited restaurant."""
+        """Ask user if they are satisfied with the last visited restaurant and mutate the rating of the
+        retuarants based on the feedback."""
         if is_satisfied:
             print(f"I'm so glad to hear that! I will recommend you more restaurants like "
                   f"{self.last_visited_restaurant.name} in future recommendations.")
-            self.last_visited_restaurant.user_feedback('yes')
+            self.last_visited_restaurant.calculate_user_feedback('yes')
         else:
             print(f"We are sorry to hear that you didn't enjoy it. We will avoid recommending it in the future.")
             self.disliked_restaurants.add(self.last_visited_restaurant)
-            self.last_visited_restaurant.user_feedback('no')
+            self.last_visited_restaurant.calculate_user_feedback('no')
             self.last_visited_restaurant = None
 
     def recommend_restaurants(self, graph: CategoryGraph) -> list[_CategoryVertex]:
