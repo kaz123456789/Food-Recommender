@@ -534,6 +534,13 @@ def load_graph(rest_file: str) -> CategoryGraph:
             review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
+
+    all_vertices = graph.get_all_vertices()
+    for i, vertex1 in enumerate(all_vertices):
+        for vertex2 in all_vertices[i + 1:]:
+            edge_weight = vertex1.calculate_edge(vertex2)  # Assuming calculate_edge is a method in _CategoryVertex
+            graph.add_edge(vertex1.name, vertex2.name, edge_weight)
+
     return graph
 
 
