@@ -333,11 +333,6 @@ class CategoryGraph(Graph):
             s_score = self.get_similarity_score(res, restaurant)
             self.add_edge(res, restaurant, s_score)
 
-        for i, res_name1 in enumerate(similar_res_names):
-            for res_name2 in similar_res_names[i + 1:]:
-                s_score = self.get_similarity_score(res_name1, res_name2)
-                self.add_edge(res_name1, res_name2, s_score)
-
     def most_similar_restaurants(self, restaurant: str) -> list[str]:
         """
         Recommend the top 5 most similar restaurants by calculating the similarity score
@@ -416,16 +411,13 @@ class User:
         Recommend restaurants based on user's history and feedback if exists.
         Otherwise, randomly generate a recommendation from the entire graph.
         """
-        if not self.last_visited_restaurant:
+        if self.last_visited_restaurant and self.last_visited_restaurant not in self.disliked_restaurants:
+            similar_restaurants = graph.most_similar_restaurants(self.last_visited_restaurant.name)
+            return [self.last_visited_restaurant] + similar_restaurants
+        else:
             all_restaurants = graph.get_all_restaurants()
             filtered_restaurants = [r for r in all_restaurants if r not in self.disliked_restaurants]
-            return [random.choice(filtered_restaurants)] if filtered_restaurants else []
-
-        neighbours = graph.get_neighbours(self.last_visited_restaurant.name)
-        recommendations = [self.last_visited_restaurant] + list(neighbours)
-        filtered_recommendations = [rest for rest in recommendations if rest not in self.disliked_restaurants]
-
-        return filtered_recommendations
+            return random.sample(filtered_restaurants, min(5, len(filtered_restaurants)))
 
 
 # Load the graph of all the restaurants, where each restaurant is connected to
