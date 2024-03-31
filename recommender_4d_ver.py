@@ -431,11 +431,25 @@ class CategoryGraph(Graph):
             return random.choice(list(self._vertices.values()))
 
 
+class AllUsers:
+    """
+    Represents all the users in the food recommender. There will be no duplicates in
+    instance object with same name.
+
+    Instance Attributes:
+        - list_of_users (User): A list of users that have used the FOODER
+    """
+    list_of_users: list[User]
+
+    def __init__(self):
+        self.list_of_users = []
+
+
 class User:
     """
     Represents a user in the restaurant recommender system.
 
-    Attributes:
+    Instance Attributes:
         - name (str): The name of the user.
         - last_visited_restaurant (_CategoryVertex): The last restaurant visited by the user based
         on the recommendation system.
