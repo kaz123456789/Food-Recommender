@@ -331,11 +331,6 @@ class CategoryGraph(Graph):
             s_score = self.get_similarity_score(res, restaurant)
             self.add_edge(res, restaurant, s_score)
 
-        for i, res_name1 in enumerate(similar_res_names):
-            for res_name2 in similar_res_names[i + 1:]:
-                s_score = self.get_similarity_score(res_name1, res_name2)
-                self.add_edge(res_name1, res_name2, s_score)
-
     def most_similar_restaurants(self, restaurant: str) -> list[str]:
         """
         Recommend the top 5 most similar restaurants by calculating the similarity score
