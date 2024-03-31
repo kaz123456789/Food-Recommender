@@ -89,6 +89,7 @@ if __name__ == "__main__":
                   + f'\n Price range: {price_range}')
             user.feedback_on_last_visit(satisfy in restaurant_graph.vertices().keys())
             quit_game = True
+
             # Ask user if they want to try again, if no, quit the game, is yes, continue.
             if_quit = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
 
