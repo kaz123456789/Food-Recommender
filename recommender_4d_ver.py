@@ -274,9 +274,11 @@ class CategoryGraph(Graph):
         # This call isn't necessary, except to satisfy PythonTA.
         Graph.__init__(self)
 
-    def vertices(self) -> dict:
-        # This allows the outside code to read the vertices
-        return self._vertices
+    def get_vertex(self, item: str) -> _CategoryVertex:
+        """
+        Get the vertex of that has the input item name.
+        """
+        return self._vertices[item]
 
     def add_vertex(self, category: int, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
@@ -396,12 +398,6 @@ class User:
         self.name = name
         self.last_visited_restaurant = None
         self.disliked_restaurants = set()
-
-    def last_visit(self, restaurant: _CategoryVertex) -> None:
-        """
-        Record the last visited restaurant based on the recommendation.
-        """
-        self.last_visited_restaurant = restaurant
 
     def feedback_on_last_visit(self, is_satisfied: bool) -> None:
         """Ask user if they are satisfied with the last visited restaurant."""

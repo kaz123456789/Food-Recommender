@@ -27,6 +27,32 @@ def read_latest_input_from_csv(lines: list[str], file: str) -> str:
                 return lines[-1]
 
 
+def get_price_range(num: int) -> str:
+    """
+    Return the corresponding price range according to the input number.
+    1 = under $10
+    2 = $11~30
+    3 = $31~60
+    4 = above $60
+    """
+    if num == 1:
+        return 'under $10'
+    elif num == 2:
+        return '$11~30'
+    elif num == 3:
+        return '$31~60'
+    else:
+        return 'above $60'
+
+
+def record_last_visit(u: User, g: CategoryGraph, restaurant: str) -> None:
+    """
+    Record the last visited restaurant based on the recommendation.
+    """
+    r = CategoryGraph.get_vertex(g, restaurant)
+    u.last_visited_restaurant = r
+
+
 if __name__ == "__main__":
     restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
     quit_game = False
@@ -45,24 +71,24 @@ if __name__ == "__main__":
             print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
                   f"matching restaurant this time, too!")
 
-        if not user.last_visited_restaurant:
+        if user.last_visited_restaurant:
             you_may_like = restaurant_graph.most_similar_restaurants(user.last_visited_restaurant.name)
             restaurant_graph.most_similar_restaurants_all_connected(user.last_visited_restaurant.name)
         else:
             random_rest = restaurant_graph.get_random_restaurant()
+            price_range = get_price_range(random_rest.price_range)
             satisfy_with_first = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
 
-            if satisfy_with_first.lower() == 'yes':
-                quit_game = True
-                break
-            else:
+            if satisfy_with_first.lower() == 'no':
                 random_rests = user.recommend_restaurants(restaurant_graph)
-                for res in random_rests:
-                    print(res.name)
-                satisfy = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
-                user.last_visit(restaurant_graph.vertices()[satisfy])
-                user.feedback_on_last_visit(satisfy in restaurant_graph.vertices().keys())
+                satisfied_rest = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+                record_last_visit(user, restaurant_graph, satisfied_rest)
 
+            print(f'Contragulations! You\'ve matched with your resturant: {random_rest.name}!' +
+                  '\n Details about the restaurant:' + f'\n Address: {random_rest.address}'
+                  + f'\n Price range: {price_range}')
+            user.feedback_on_last_visit(satisfy in restaurant_graph.vertices().keys())
+            quit_game = True
             # Ask user if they want to try again, if no, quit the game, is yes, continue.
             if_quit = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
 
@@ -82,10 +108,3 @@ if __name__ == "__main__":
     print('Congratulations! You\'ve find your restaurant match! We hope can enjoy the food there!')
     print(f'Your final choice: {lst_of_rest[index]}' + '\n')
     print(f'The the address of the restaurant: {address}')
-
-
-
-
-
-    
-    
