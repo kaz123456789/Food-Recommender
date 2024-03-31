@@ -27,7 +27,7 @@ if __name__ == "__main__":
         else:
             print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
                   f"matching restaurant this time, too!")
-        
+
 
 
 
