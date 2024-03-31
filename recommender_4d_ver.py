@@ -14,7 +14,7 @@ import csv
 from typing import Any, Union
 
 import requests
-from math import radians, sin, cos, sqrt, atan2
+import math
 
 
 def get_location_from_ip() -> tuple[float, float]:
@@ -29,18 +29,14 @@ def get_location_from_ip() -> tuple[float, float]:
     return lat, lon
 
 
-def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+def calculate_euclidean_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
-    Calculate the distance between two points on the earth specified in decimal degrees.
+    Calculate the Euclidean distance between two points.
     """
-    r = 6371.0  # Earth radius in kilometers
+    p1 = (lat1, lon1)
+    p2 = (lat2, lon2)
 
-    d_lat = radians(lat2 - lat1)
-    d_lon = radians(lon2 - lon1)
-    a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = r * c
+    distance = math.dist(p1, p2)
     return distance
 
 
