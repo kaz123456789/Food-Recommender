@@ -222,7 +222,7 @@ class _CategoryVertex(_Vertex):
             sorted_factors = [factor.strip() for factor in ans3.split(',')]
 
         weights = [0.5, 0.3, 0.2]  # Priority: 1st, 2nd, 3rd
-        pref_weights = {pref: weight for pref, weight in zip(preferences, weights)}
+        pref_weights = {pref: weight for pref, weight in zip(sorted_factors, weights)}
 
         # Compare category (assuming 'category' directly maps to 'category')
         if self.category == other.category:
@@ -245,7 +245,7 @@ class _CategoryVertex(_Vertex):
         Determine if the restaurant is within the maximum distance from the user's location.
         """
         res_lat, res_lon = self.location
-        return self.calculate_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
+        return calculate_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
 
 
 class CategoryGraph(Graph):
@@ -307,60 +307,6 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
-    def load_graph(self, rest_file: str) -> CategoryGraph:
-        """Return a restaurant graph corresponding to the given datasets.
-
-        The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
-        'Restaurant Price Range', 'Restaurant Location' and 'Review Rates'.
-        """
-        graph = CategoryGraph()
-
-        with open(rest_file, 'r', encoding='cp1252') as file:  # Assuming CP1252 encoding
-            reader = csv.reader(file)
-            next(reader, None)  # Skip the header row
-            for row in reader:
-                category, address, name, price_range, review_rate, loc = row
-                # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
-                location = tuple(float(val.strip()) for val in loc.split(','))
-                latitude = float(location[0])
-                longitude = float(location[1])
-                location = (latitude, longitude)
-
-                graph.add_vertex(category, address, name, price_range, review_rate, location)
-
-        return graph
-
-    def get_user_input(self, questions: list[str], rest_types: set[str]) -> list[str | int]:
-        """ Return a list of answers the user input."""
-
-        answer_so_far = []
-
-        print(questions[0])
-        print('(Available options: Chinese, Fast food, Italian, American, '
-              'Thai, Mexican, Korean, Vietnamese, Vegan, or French)')
-        ans1 = input('Your answer: ')
-        while ans1.lower() not in rest_types:
-            print('This is not a valid option, please enter another answer:')
-            ans1 = input('Your answer: ')
-        answer_so_far.append(ans1)
-
-        print(questions[1])
-        ans2 = input('Your answer: ')
-        while not ans2.isdigit():
-            print('This is not a number, please enter a correct distance:')
-            ans2 = input('Your answer: ')
-        answer_so_far.append(int(ans2))
-
-        print(questions[2])
-        print('Enter 1 for under $10, 2 for $11-30, 3 for $31-60, or 4 for above $61')
-        ans3 = input('Your answer: ')
-        while ans3 not in {'1', '2', '3', '4'}:
-            print('This is not a valid option, please enter another answer:')
-            ans3 = input('Your answer: ')
-        answer_so_far.append(int(ans3))
-
-        return answer_so_far
-
     def top_restaurant(self) -> str:
         """
         Run the recommender and return the top restaurant based on user preference:
@@ -373,7 +319,7 @@ class CategoryGraph(Graph):
                           'What is the maximum distance of restaurants you are looking for (in km)?',
                           'What price range are you looking for?']
 
-        user_input = self.get_user_input(rest_questions, restaurants_type)
+        user_input = get_user_input(rest_questions, restaurants_type)
         category, distance_range, price_range = user_input
         player_lat, player_lon = get_location_from_ip()
         top_res = self.recommend_top_restaurant(category, player_lat, player_lon, distance_range, price_range)
@@ -390,7 +336,7 @@ class CategoryGraph(Graph):
         qualifying_restaurants = []
         for restaurant in self._vertices.values():
             if (restaurant.category == desired_cuisine
-                    and self.is_within_distance(restaurant, max_distance, user_lat, user_lon)
+                    and restaurant.is_within_distance(max_distance, user_lat, user_lon)
                     and restaurant.price_range == price):
                 if (restaurant.review_rate, restaurant) not in qualifying_restaurants:
                     qualifying_restaurants.append((restaurant.review_rate, restaurant))
@@ -400,9 +346,10 @@ class CategoryGraph(Graph):
 
         return res_recommendations[0]
 
-    # TBW - to be written
     def recommend_restaurants(self, restaurant: str) -> list[str]:
-        
+        """
+
+        """
 
     def modify_review_rate(self, rest: list[str], rates: list[int]) -> None:
         """
@@ -421,6 +368,62 @@ class CategoryGraph(Graph):
         Return the address of the input restaurant.
         """
         return self._vertices[name].address
+
+
+def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int]:
+    """ Return a list of answers the user input."""
+
+    answer_so_far = []
+
+    print(questions[0])
+    print('(Available options: Chinese, Fast food, Italian, American, '
+          'Thai, Mexican, Korean, Vietnamese, Vegan, or French)')
+    ans1 = input('Your answer: ')
+    while ans1.lower() not in rest_types:
+        print('This is not a valid option, please enter another answer:')
+        ans1 = input('Your answer: ')
+    answer_so_far.append(ans1)
+
+    print(questions[1])
+    ans2 = input('Your answer: ')
+    while not ans2.isdigit():
+        print('This is not a number, please enter a correct distance:')
+        ans2 = input('Your answer: ')
+    answer_so_far.append(int(ans2))
+
+    print(questions[2])
+    print('Enter 1 for under $10, 2 for $11-30, 3 for $31-60, or 4 for above $61')
+    ans3 = input('Your answer: ')
+    while ans3 not in {'1', '2', '3', '4'}:
+        print('This is not a valid option, please enter another answer:')
+        ans3 = input('Your answer: ')
+    answer_so_far.append(int(ans3))
+
+    return answer_so_far
+
+
+def load_graph(rest_file: str) -> CategoryGraph:
+    """Return a restaurant graph corresponding to the given datasets.
+
+    The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
+    'Restaurant Price Range', 'Restaurant Location' and 'Review Rates'.
+    """
+    graph = CategoryGraph()
+
+    with open(rest_file, 'r', encoding='cp1252') as file:  # Assuming CP1252 encoding
+        reader = csv.reader(file)
+        next(reader, None)  # Skip the header row
+        for row in reader:
+            category, address, name, price_range, review_rate, loc = row
+            # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
+            location = tuple(float(val.strip()) for val in loc.split(','))
+            latitude = float(location[0])
+            longitude = float(location[1])
+            location = (latitude, longitude)
+
+            graph.add_vertex(category, address, name, price_range, review_rate, location)
+
+    return graph
 
 
 if __name__ == '__main__':
