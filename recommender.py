@@ -11,7 +11,7 @@ This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting 
 """
 from __future__ import annotations
 import csv
-from typing import Any
+from typing import Any, Union
 
 import requests
 from math import radians, sin, cos, sqrt, atan2
@@ -45,8 +45,8 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 
 class _Vertex:
-    """A vertex in a restaurant graph, used to represent a restaurant.
-    Each vertex item is either a restaurant name.
+    """
+    Each vertex item is a restaurant, a string.
 
     Instance Attributes:
         - name: The data stored in this vertex, representing the name of the restaurant.
@@ -62,6 +62,9 @@ class _Vertex:
     Representation Invariants:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
+        - self.category in {'chinese', 'fast food', 'italian', 'japanese', 'indian',
+                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+        - self.price_range in {'1', '2', '3', '4'}
     """
     category: str
     address: str
@@ -69,13 +72,13 @@ class _Vertex:
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_Vertex, float]
+    neighbours: set[_Vertex]
 
     def __init__(self, category: str, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
         """
-        Initialize a new vertex with the given name, category, address, price_range,
-        location, review_rate, neighbours.
+        Initialize a new vertex with the category, address, given name, price range,
+        review rate, location (latitude, longitude).
         This vertex is initialized with no neighbours.
         """
         self.category = category
@@ -84,7 +87,7 @@ class _Vertex:
         self.price_range = price_range
         self.review_rate = review_rate
         self.location = location
-        self.neighbours = {}
+        self.neighbours = set()
 
     def degree(self) -> int:
         """Return the degree of this vertex."""
@@ -92,7 +95,8 @@ class _Vertex:
 
 
 class Graph:
-    """A graph used to represent .
+    """
+    A graph used to represent a categorized/price-ranged restaurants network.
     """
     # Private Instance Attributes:
     #     - _vertices:
@@ -116,21 +120,21 @@ class Graph:
         if name not in self._vertices:
             self._vertices[name] = _Vertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, item1: Any, item2: Any, similarity_score: float) -> None:
+    def add_edge(self, name1: Any, name2: Any) -> None:
         """
         Add an edge with a similarity score between the two vertices with the given items in this graph.
 
-        Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
+        Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
 
         Preconditions:
-            - item1 != item2
+            - name1 != name2
         """
-        if item1 in self._vertices and item2 in self._vertices:
-            v1 = self._vertices[item1]
-            v2 = self._vertices[item2]
+        if name1 in self._vertices and name2 in self._vertices:
+            v1 = self._vertices[name1]
+            v2 = self._vertices[name2]
 
-            v1.neighbours[v2] = similarity_score
-            v2.neighbours[v1] = similarity_score
+            v1.neighbours.add(v2)
+            v2.neighbours.add(v1)
         else:
             # If either vertex is not in the graph, raise an error
             raise ValueError
@@ -170,22 +174,29 @@ class Graph:
 
 
 class _CategoryVertex(_Vertex):
-    """A vertex in a weighted book review graph, used to represent a user or a book.
+    """A vertex in a categorized/price-ranged restaurant graph, used to represent a restaurant.
 
-    Same documentation as _Vertex from Exercise 3, except now neighbours is a dictionary mapping
-    a neighbour vertex to the weight of the edge to from self to that neighbour.
-    Note that for this exercise, the weights will be integers between 1 and 5.
+    Same documentation as _Vertex from above, except now neighbours is a dictionary mapping
+    a neighbour vertex to the category or price range of the edge to from self to that neighbour.
 
     Instance Attributes:
-        - item: The data stored in this vertex, representing a user or book.
-        - kind: The type of this vertex: 'user' or 'book'.
-        - neighbours: The vertices that are adjacent to this vertex, and their corresponding
-            edge weights.
+        - name: The data stored in this vertex, representing the name of the restaurant.
+        - category: The region of the restaurant (i.e. Chinese, Japanese...)
+        - address: The address of the restaurant.
+        - price_range: A range of price of the restaurant.
+        - location: The location of the restaurant as a tuple where the first parameter is the latitude
+        and the second parameter is the longitude
+        - review_rate: A rate range from 0 to 5 of the restaurant.
+        0 means the restaurant sucks and 5 means the restaurant is fantastic.
+        - neighbours: The vertices that are adjacent to this vertex.
 
     Representation Invariants:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
-        - self.kind in {'user', 'book'}
+        - self.category in {'chinese', 'fast food', 'italian', 'japanese', 'indian',
+                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+        - self.price_range in {'1', '2', '3', '4'}
+        - 0 <= self.review rate <= 5
     """
     category: str
     address: str
@@ -193,16 +204,20 @@ class _CategoryVertex(_Vertex):
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_CategoryVertex, str]
+    neighbours: dict[_CategoryVertex, Union[str, int]]
 
     def __init__(self, category: str, address: str, name: Any, price_range: int,
                  review_rate: float, location: tuple[float, float]) -> None:
-        """Initialize a new vertex with the given item and kind.
+        """Initialize a new vertex with the given category, address, name, price_range, review_rate,
+        and location.
 
         This vertex is initialized with no neighbours.
 
         Preconditions:
-            - kind in {'user', 'book'}
+            - category in {'chinese', 'fast food', 'italian', 'japanese', 'indian',
+                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+            - price_range in {'1', '2', '3', '4'}
+            - 0 <= review rate <= 5
         """
         super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
@@ -249,9 +264,9 @@ class _CategoryVertex(_Vertex):
 
 
 class CategoryGraph(Graph):
-    """A weighted graph used to represent a book review network that keeps track of review scores.
+    """A graph used to represent a categorized/price-ranged restaurants network.
 
-    Note that this is a subclass of the Graph class from Exercise 3, and so inherits any methods
+    Note that this is a subclass of the Graph class, and so inherits any methods
     from that class that aren't overridden here.
     """
     # Private Instance Attributes:
@@ -277,7 +292,7 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-    def add_whole_vertex(self, v: Any, vertex: _CategoryVertex) -> None:
+    def add_whole_vertex(self, edge: str | int, vertex: _CategoryVertex) -> None:
         """Add a WHOLE/exiting vertex to this graph.
 
         The new vertex is not adjacent to any other vertices.
