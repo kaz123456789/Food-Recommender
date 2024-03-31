@@ -421,7 +421,8 @@ class User:
         Otherwise, randomly generate a recommendation from the entire graph.
         """
         if self.last_visited_restaurant and self.last_visited_restaurant not in self.disliked_restaurants:
-            return graph.final_recommend_restaurants(self.last_visited_restaurant.name, 5)
+            similar_restaurants = graph.most_similar_restaurants(self.last_visited_restaurant.name)
+            return [self.last_visited_restaurant] + similar_restaurants
         else:
             all_restaurants = graph.get_all_restaurants()
             filtered_restaurants = [r for r in all_restaurants if r not in self.disliked_restaurants]
