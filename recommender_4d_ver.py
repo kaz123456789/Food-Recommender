@@ -247,8 +247,10 @@ class _CategoryVertex(_Vertex):
 
     def user_feedback(self, feedback: str) -> None:
         if feedback.lower() == 'yes':
-            if self.review_rate < 5.0:
-                self.review_rate += 5.0 - self.review_rate
+            if self.review_rate < 3.0:
+                self.review_rate += 1.0
+            elif self.review_rate < 5.0:
+                self.review_rate += 0.2
         else:
             self.review_rate -= 0.2
 
@@ -319,55 +321,38 @@ class CategoryGraph(Graph):
         v2 = self._vertices[name2]
         return v1.similarity_score(v2)
 
-    def most_similar_restaurants(self, desired_cuisine: str, user_lat: float, user_lon: float,
-                                max_distance: float, price: int) -> _CategoryVertex:
+    def most_similar_restaurants_all_connected(self, restaurant: str) -> None:
         """
-        Recommend the top restaurant (as a _CategoryVertex, not the name of the restaurant)
-        based on user location and user's preference of cuisine type, maximum acceptable distance,
-        and acceptable price range.
+        Connects restaurant to its top 5 most similar restaurants based on similarity scores.
         """
-        qualifying_restaurants = []
-        for restaurant in self._vertices.values():
-            if (restaurant.category == desired_cuisine
-                    and restaurant.is_within_distance(max_distance, user_lat, user_lon)
-                    and restaurant.price_range == price):
-                if (restaurant.review_rate, restaurant) not in qualifying_restaurants:
-                    qualifying_restaurants.append((restaurant.review_rate, restaurant))
+        similar_res_names = self.most_similar_restaurants(restaurant)
 
-        sorted_recommendations = sorted(qualifying_restaurants, reverse=True)
-        res_recommendations = [score[1] for score in sorted_recommendations]
+        for res in similar_res_names:
+            s_score = self.get_similarity_score(res, restaurant)
+            self.add_edge(res, restaurant, s_score)
 
-        return res_recommendations[0]
+        for i, res_name1 in enumerate(similar_res_names):
+            for res_name2 in similar_res_names[i + 1:]:
+                s_score = self.get_similarity_score(res_name1, res_name2)
+                self.add_edge(res_name1, res_name2, s_score)
 
-    def final_recommend_restaurants(self, restaurant: str, number: int) -> list[str]:
+    def most_similar_restaurants(self, restaurant: str) -> list[str]:
         """
-        Recommend the top number (i.e. 3, 4, etc.) restaurants by calculating the similarity scores
-        between restaurant and the restaurants with the same category/price range and return a list
-        of length number.
+        Recommend the top 5 most similar restaurants by calculating the similarity score
+        between the restaurant and the rest of the restaurants, then return a list of
+        the names of the top 5 similar restaurants.
         """
         recommendations = []
         for res in self._vertices.values():
             if res.name != restaurant:
-                sim_score = self.get_similarity_score(res, restaurant)
-                if (res.review_rate, restaurant) not in recommendations:
+                sim_score = self.get_similarity_score(res.name, restaurant)
+                if (sim_score, restaurant) not in recommendations:
                     recommendations.append((sim_score, restaurant))
 
         sorted_recommendations = sorted(recommendations, reverse=True)
         final_recommendations = [score[1] for score in sorted_recommendations]
 
-        return final_recommendations[:number]
-
-    def modify_review_rate(self, rest: list[str], rates: list[int]) -> None:
-        """
-        Mutates the graph based on the likes and dislikes the user inputted.
-        This will help the recommender generate a more accurate answer next time based
-        on user's preference on the restaurants.
-        """
-        for i in range(len(rates)):
-            if not rates[i]:
-                self._vertices[rest[i]] -= 0.2
-            else:
-                self._vertices[rest[i]] += 0.2
+        return final_recommendations[:5]
 
     def get_all_restaurants(self) -> list[_CategoryVertex]:
         """Return a list of all restaurant vertices in the graph."""
@@ -470,12 +455,12 @@ def load_graph(rest_file: str) -> CategoryGraph:
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
 
-    all_vertices = graph.get_all_vertices()
-    for i, vertex1 in enumerate(all_vertices):
-        for vertex2 in all_vertices[i + 1:]:
-            edge_weight = vertex1.calculate_edge(vertex2)  # Assuming calculate_edge is a method in _CategoryVertex
-            graph.add_edge(vertex1.name, vertex2.name, edge_weight)
-
+    # all_vertices = graph.get_all_vertices()
+    # for i, vertex1 in enumerate(all_vertices):
+    #     for vertex2 in all_vertices[i + 1:]:
+    #         edge_weight = vertex1.calculate_edge(vertex2)  # Assuming calculate_edge is a method in _CategoryVertex
+    #         graph.add_edge(vertex1.name, vertex2.name, edge_weight)
+    #
     return graph
 
 
