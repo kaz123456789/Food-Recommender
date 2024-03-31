@@ -281,7 +281,7 @@ class _CategoryVertex(_Vertex):
 
 
 class CategoryGraph(Graph):
-    """A graph used to represent a categorized/price-ranged restaurants network.
+    """A graph used to represent a restaurant system.
 
     Note that this is a subclass of the Graph class, and so inherits any methods
     from that class that aren't overridden here.
@@ -346,24 +346,22 @@ class CategoryGraph(Graph):
         v2 = self._vertices[name2]
         return v1.similarity_score(v2)
 
-    # def top_restaurant(self) -> str:
-    #     """
-    #     Run the recommender and return the top restaurant based on user preference:
-    #     type of cuisine, maximum acceptable distance, and the price range.
-    #     """
-    #     restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
-    #                         7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
-    #
-    #     rest_questions = ['What is your preferred type of cuisine?',
-    #                       'What is the maximum distance of restaurants you are looking for (in km)?',
-    #                       'What price range are you looking for?']
-    #
-    #     user_input = get_user_input(rest_questions, restaurants_type)
-    #     category, distance_range, price_range = user_input
-    #     player_lat, player_lon = get_location_from_ip()
-    #     top_res = self.top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
-    #
-    #     return top_res.name
+    def run_recommender(self) -> None:
+        """
+        Run the recommender and return the top restaurant based on user preference:
+        type of cuisine, maximum acceptable distance, and the price range.
+        """
+        restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+                            7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
+
+        rest_questions = ['What is your preferred type of cuisine?',
+                          'What is the maximum distance of restaurants you are looking for (in km)?',
+                          'What price range are you looking for?']
+
+        user_input = get_user_input(rest_questions, restaurants_type)
+        category, distance_range, price_range = user_input
+        player_lat, player_lon = get_location_from_ip()
+        top_res = self.top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
 
     def top_reviewed_restaurant(self, desired_cuisine: str, user_lat: float, user_lon: float,
                                 max_distance: float, price: int) -> _CategoryVertex:
@@ -438,18 +436,21 @@ class User:
     Represents a user in the restaurant recommender system.
 
     Attributes:
-        name (str): The name of the user.
-        last_visited_restaurant (_CategoryVertex): The last restaurant visited by the user based on the system's
-        recommendation.
-        disliked_restaurants (set[_CategoryVertex]): A set of restaurants that the user did not like.
+        - name (str): The name of the user.
+        - last_visited_restaurant (_CategoryVertex): The last restaurant visited by the user based
+        on the recommendation system.
+        - disliked_restaurants (set[_CategoryVertex]): A set of restaurants that the user did not like.
     """
+    name: str
+    last_visited_restaurant: _CategoryVertex | None
+    disliked_restaurants: set[_CategoryVertex]
 
     def __init__(self, name: str):
         self.name = name
         self.last_visited_restaurant = None
         self.disliked_restaurants = set()
 
-    def visit_restaurant(self, restaurant: _CategoryVertex):
+    def last_visit_restaurant(self, restaurant: _CategoryVertex):
         """
         Record the last visited restaurant based on the recommendation.
         """
@@ -458,7 +459,7 @@ class User:
     def feedback_on_last_visit(self, is_satisfied: bool):
         """Ask user if they are satisfied with the last visited restaurant."""
         if is_satisfied:
-            print(f"I'm so glad to hear that! I will recommend more restaurants like "
+            print(f"I'm so glad to hear that! I will recommend you more restaurants like "
                   f"{self.last_visited_restaurant.name} in future recommendations.")
         else:
             print(f"We are sorry you didn't enjoy it. We will avoid recommending it in the future.")
@@ -516,7 +517,7 @@ def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int
 
 
 # Load the graph of all the restaurants, where each restaurant is connected to
-# the rest of the restaurants by the .
+# the rest of the restaurants.
 def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
