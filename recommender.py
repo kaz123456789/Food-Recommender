@@ -363,6 +363,7 @@ class CategoryGraph(Graph):
             else:
                 self._vertices[rest[i]] += 0.2
 
+    # fqy
     def get_rest_address(self, name: str) -> str:
         """
         Return the address of the input restaurant.
@@ -370,6 +371,7 @@ class CategoryGraph(Graph):
         return self._vertices[name].address
 
 
+# fqy
 def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int]:
     """ Return a list of answers the user input."""
 
@@ -402,6 +404,7 @@ def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int
     return answer_so_far
 
 
+# Load the graph of all the restaurants.
 def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
