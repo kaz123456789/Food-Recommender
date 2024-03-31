@@ -12,11 +12,11 @@ This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting 
 from recommender import CategoryGraph, load_graph, get_user_input, get_location_from_ip
 
 if __name__ == "__main__":
-    graph = load_graph("filtered_restaurant_dt.csv", 'category')
+    restaurant_graph = load_graph("filtered_restaurant_dt.csv", 'category')
 
-    print("Welcome!This is the food recommender FOODER. ")
+    print("Welcome!This is the restaurant recommender FOODER. ")
 
-    lst_of_rest = CategoryGraph.run_recommender(graph)
+    lst_of_rest = self.run_recommender(graph)
     
     print(lst_of_rest)
     rate_so_far = []
