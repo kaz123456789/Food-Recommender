@@ -420,16 +420,12 @@ class User:
         Recommend restaurants based on user's history and feedback if exists.
         Otherwise, randomly generate a recommendation from the entire graph.
         """
-        if not self.last_visited_restaurant:
+        if self.last_visited_restaurant and self.last_visited_restaurant not in self.disliked_restaurants:
+            return graph.final_recommend_restaurants(self.last_visited_restaurant.name, 5)
+        else:
             all_restaurants = graph.get_all_restaurants()
             filtered_restaurants = [r for r in all_restaurants if r not in self.disliked_restaurants]
-            return [random.choice(filtered_restaurants)] if filtered_restaurants else []
-
-        neighbours = graph.get_neighbours(self.last_visited_restaurant.name)
-        recommendations = [self.last_visited_restaurant] + list(neighbours)
-        filtered_recommendations = [rest for rest in recommendations if rest not in self.disliked_restaurants]
-
-        return filtered_recommendations
+            return random.sample(filtered_restaurants, min(5, len(filtered_restaurants)))
 
 
 # Load the graph of all the restaurants, where each restaurant is connected to
