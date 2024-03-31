@@ -420,23 +420,18 @@ class CategoryGraph(Graph):
         Calculate a weighted "distance" between two restaurants considering their
         category, price range, review rate, and geographical distance to the user.
         """
-        # Example conversion: simple binary for category match/mismatch
         category_similarity = 1 if restaurant1.category == restaurant2.category else 0
 
-        # Normalize numerical data like price range and review rate
         price_similarity = 1 - abs(restaurant1.price_range - restaurant2.price_range) / max_price_range_difference
         review_similarity = 1 - abs(
-            restaurant1.review_rate - restaurant2.review_rate) / 5  # Assuming 5 is the max review score
+            restaurant1.review_rate - restaurant2.review_rate) / 5  
 
-        # Geographical distance normalized (assuming calculate_euclidean_distance returns a normalized value)
         user_lat, user_lon = get_location_from_ip()
         geo_distance1 = calculate_euclidean_distance(user_lat, user_lon, restaurant1.location[0],
                                                      restaurant1.location[1])
         geo_distance2 = calculate_euclidean_distance(user_lat, user_lon, restaurant2.location[0],
                                                      restaurant2.location[1])
 
-        # Combine the similarities and distances into a single metric
-        # Adjust the weights as necessary to balance the influence of each factor
         edge_weight = 0.25 * category_similarity + 0.25 * price_similarity + 0.25 * review_similarity + 0.25 * (
                     geo_distance1 + geo_distance2) / 2
 
