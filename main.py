@@ -19,16 +19,15 @@ if __name__ == "__main__":
 
     all_users = AllUsers()
     while not quit_game:
-        while True:
-            user_name = input("Please enter your name: \n")
-            user = User(user_name)
-            if user not in all_users.list_of_users:
-                all_users.list_of_users.append(user)
-                print(f"Welcome to FOODER, {user_name}!")
-                break
-            else:
-                print(f"Welcome back! Are you {user_name}? If no, this name is already taken, "
-                      f"please choose another name.")
+        user_name = input("Please enter your name: \n")
+        user = User(user_name)
+        if user not in all_users.list_of_users:
+            all_users.list_of_users.append(user)
+            print(f"Welcome to FOODER, {user_name}!")
+        else:
+            print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
+                  f"matching restaurant this time, too!")
+        
 
 
 
