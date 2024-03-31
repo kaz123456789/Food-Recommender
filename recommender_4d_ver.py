@@ -20,7 +20,7 @@ import random
 
 def get_location_from_ip() -> tuple[float, float]:
     """
-    Retrieve the current location (latitude and longitude) based on the public IP address of the user.
+    Get the current location (latitude and longitude) based on the public IP address of the user.
     """
     response = requests.get('https://api64.ipify.org?format=json').json()
     ip_address = response['ip']
@@ -32,7 +32,7 @@ def get_location_from_ip() -> tuple[float, float]:
 
 def calculate_euclidean_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
-    Calculate the Euclidean distance between two points.
+    Calculate the distance between two points using the Euclidean distance formula.
     """
     p1 = (lat1, lon1)
     p2 = (lat2, lon2)
