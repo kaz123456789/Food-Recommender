@@ -15,6 +15,7 @@ from typing import Any, Union
 
 import requests
 import math
+import random
 
 
 def get_location_from_ip() -> tuple[float, float]:
@@ -62,7 +63,7 @@ class _Vertex:
                             'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
         - self.price_range in {'1', '2', '3', '4'}
     """
-    category: str
+    category: int
     address: str
     name: Any
     price_range: int
@@ -70,7 +71,7 @@ class _Vertex:
     location: tuple[float, float]
     neighbours: set[_Vertex]
 
-    def __init__(self, category: str, address: str, name: str,
+    def __init__(self, category: int, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
         """
         Initialize a new vertex with the category, address, given name, price range,
@@ -106,7 +107,7 @@ class Graph:
         """
         self._vertices = {}
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: int,
+    def add_vertex(self, category: int, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
         """
         Add a vertex with the given restaurant details to this graph.
@@ -194,15 +195,15 @@ class _CategoryVertex(_Vertex):
         - self.price_range in {'1', '2', '3', '4'}
         - 0 <= self.review rate <= 5
     """
-    category: str
+    category: int
     address: str
     name: Any
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_CategoryVertex, Union[str, int]]
+    neighbours: dict[_CategoryVertex, float]
 
-    def __init__(self, category: str, address: str, name: Any, price_range: int,
+    def __init__(self, category: int, address: str, name: Any, price_range: int,
                  review_rate: float, location: tuple[float, float]) -> None:
         """Initialize a new vertex with the given category, address, name, price_range, review_rate,
         and location.
@@ -256,7 +257,25 @@ class _CategoryVertex(_Vertex):
         Determine if the restaurant is within the maximum distance from the user's location.
         """
         res_lat, res_lon = self.location
-        return calculate_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
+        return calculate_euclidean_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
+
+    def calculate_edge(self, other: _CategoryVertex) -> float:
+        """
+        Calculate the Euclidean distance between two restaurants in 4-dimensions such that
+        the coordinates are represented as category, prince range, review rate, and the Euclidean
+        distance between the restaurant and the user.
+        """
+        p0_lat, p0_lon = get_location_from_ip()
+        p1_lat, p1_lon = self.location
+        p2_lat, p2_lon = other.location
+        p1 = (self.category, self.price_range, self.review_rate,
+              calculate_euclidean_distance(p0_lat, p0_lon, p1_lat, p1_lon))
+        p2 = (other.category, other.price_range, other.review_rate,
+              calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
+
+        distance = math.sqrt(((p1[0] - p2[0]) ** 2) + ((p1[1] - p2[1]) ** 2)
+                             + ((p1[2] - p2[2]) ** 2) + ((p1[3] - p2[3]) ** 2))
+        return distance
 
 
 class CategoryGraph(Graph):
@@ -282,7 +301,7 @@ class CategoryGraph(Graph):
         # This allows the outside code to read the vertices
         return self._vertices.values()
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: int,
+    def add_vertex(self, category: int, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
         """Add a vertex with the given attributes to this graph.
 
@@ -292,22 +311,22 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, name1: Any, name2: Any, edge_type: Union[str, int] = '') -> None:
+    def add_edge(self, name1: Any, name2: Any, edge_4d: float = 1.0) -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
-        Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
+        Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
 
         Preconditions:
-            - item1 != item2
+            - name1 != name2
         """
         if name1 in self._vertices and name2 in self._vertices:
             v1 = self._vertices[name1]
             v2 = self._vertices[name2]
 
             # Add the new edge
-            v1.neighbours[v2] = edge_type
-            v2.neighbours[v1] = edge_type
+            v1.neighbours[v2] = edge_4d
+            v2.neighbours[v1] = edge_4d
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
@@ -330,8 +349,8 @@ class CategoryGraph(Graph):
         Run the recommender and return the top restaurant based on user preference:
         type of cuisine, maximum acceptable distance, and the price range.
         """
-        restaurants_type = {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+        restaurants_type = {'american', 'chinese', 'fast food', 'french', 'indian', 'italian',
+                            'japanese', 'korean', 'mexican', 'thai', 'vegan', 'vietnamese'}
 
         rest_questions = ['What is your preferred type of cuisine?',
                           'What is the maximum distance of restaurants you are looking for (in km)?',
@@ -436,7 +455,7 @@ def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int
 
 
 # Load the graph of all the restaurants, where the edge is either category or price range.
-def load_graph(rest_file: str, edge_type: str) -> CategoryGraph:
+def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
     The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
@@ -457,16 +476,6 @@ def load_graph(rest_file: str, edge_type: str) -> CategoryGraph:
             review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
-
-    vertices = list(graph.vertices())  # Assuming _vertices stores vertex objects.
-    for i in range(len(vertices)):
-        for j in range(i + 1, len(vertices)):
-            vertex1 = vertices[i]
-            vertex2 = vertices[j]
-            if edge_type == 'category' and vertex1.category == vertex2.category:
-                graph.add_edge(vertex1, vertex2, vertex1.category)
-            elif edge_type == 'price_range' and vertex1.price_range == vertex2.price_range:
-                graph.add_edge(vertex1, vertex2, vertex1.price_range)
 
     return graph
 
