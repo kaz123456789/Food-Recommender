@@ -21,18 +21,6 @@ cuisine_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'in
 price_range = {1: 'Under $10', 2: '$11-30', 3: '$31-60', 4: 'Above $61'}
 
 
-def read_latest_input_from_csv(lines: list[str], file: str) -> str:
-    """
-    Reads the only line in the CSV file, which is the latest user input.
-    """
-    with open(file, mode='r', newline='') as file:
-        reader = csv.reader(file)
-        for row in reader:  # There should only be one row
-            if row not in lines:
-                lines.append(row[0])
-                return lines[-1]
-
-
 def get_price_range(num: int) -> str:
     """
     Return the corresponding price range according to the dictionary mapping
@@ -65,7 +53,7 @@ if __name__ == "__main__":
 
     all_users = AllUsers()
     while not quit_game:
-        user_name = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+        user_name = input('Pleaser enter your name: ')
         user = User(user_name)
 
         if user not in all_users.list_of_users:
@@ -81,14 +69,16 @@ if __name__ == "__main__":
         else:
             random_rest = restaurant_graph.get_random_restaurant()
             price_range = get_price_range(random_rest.price_range)
-            satisfy_with_first = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+            satisfy_with_first = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\': ')
 
             if satisfy_with_first.lower() == 'no':
                 random_rests = user.recommend_restaurants(restaurant_graph)
-                satisfied_rest = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+                for rest in random_rests:
+                    print(f'{rest}')
+                satisfied_rest = input('Pick one restaurant from the following that matches with your taste the most:')
                 record_last_visit(user, restaurant_graph, satisfied_rest)
 
-            print(f'Contragulations! You\'ve matched with your resturant: {random_rest.name}!' +
+            print(f'Congratulations! You\'ve matched with your restaurant: {random_rest.name}!' +
                   '\n Details about the restaurant:' + f'\n Address: {random_rest.address}'
                   + f'\n Price range: {price_range}')
             user.feedback_on_last_visit(satisfy in restaurant_graph.vertices().keys())

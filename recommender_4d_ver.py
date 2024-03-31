@@ -158,16 +158,6 @@ class Graph:
         else:
             raise ValueError
 
-    def get_all_vertices(self, category: str = '') -> set:
-        """
-        Return a set of all vertex names in this graph.
-        If category != '', only return the items of the given vertex kind.
-        """
-        if category != '':
-            return {v.name for v in self._vertices.values() if v.category == category}
-        else:
-            return set(self._vertices.keys())
-
 
 class _CategoryVertex(_Vertex):
     """A vertex that represent a restaurant in a restaurant system graph.
@@ -398,7 +388,7 @@ class User:
 
     def feedback_on_last_visit(self, is_satisfied: bool) -> None:
         """Ask user if they are satisfied with the last visited restaurant and mutate the rating of the
-        retuarants based on the feedback."""
+        restaurants based on the feedback."""
         if is_satisfied:
             print(f"I'm so glad to hear that! I will recommend you more restaurants like "
                   f"{self.last_visited_restaurant.name} in future recommendations.")
