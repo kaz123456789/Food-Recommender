@@ -262,6 +262,23 @@ class _CategoryVertex(_Vertex):
         res_lat, res_lon = self.location
         return calculate_euclidean_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
 
+    def calculate_edge(self, other: _CategoryVertex) -> float:
+        """
+        Calculate the Euclidean distance between two restaurants in 4-dimensions such that
+        the coordinates are represented as category, prince range, review rate, and the Euclidean
+        distance between the restaurant and the user.
+        """
+        p0_lat, p0_lon = get_location_from_ip()
+        p1_lat, p1_lon = self.location
+        p2_lat, p2_lon = other.location
+        p1 = (self.category, self.price_range, self.review_rate,
+              calculate_euclidean_distance(p0_lat, p0_lon, p1_lat, p1_lon))
+        p2 = (other.category, other.price_range, other.review_rate,
+              calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
+
+        distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
+        return distance
+
 
 class CategoryGraph(Graph):
     """A graph used to represent a categorized/price-ranged restaurants network.
@@ -415,28 +432,6 @@ class CategoryGraph(Graph):
         if self._vertices:
             return random.choice(list(self._vertices.values()))
 
-    def calculate_edge(self, restaurant1: _CategoryVertex, restaurant2: _CategoryVertex) -> float:
-        """
-        Calculate a weighted "distance" between two restaurants considering their
-        category, price range, review rate, and geographical distance to the user.
-        """
-        category_similarity = 1 if restaurant1.category == restaurant2.category else 0
-
-        price_similarity = 1 - abs(restaurant1.price_range - restaurant2.price_range) / max_price_range_difference
-        review_similarity = 1 - abs(
-            restaurant1.review_rate - restaurant2.review_rate) / 5  
-
-        user_lat, user_lon = get_location_from_ip()
-        geo_distance1 = calculate_euclidean_distance(user_lat, user_lon, restaurant1.location[0],
-                                                     restaurant1.location[1])
-        geo_distance2 = calculate_euclidean_distance(user_lat, user_lon, restaurant2.location[0],
-                                                     restaurant2.location[1])
-
-        edge_weight = 0.25 * category_similarity + 0.25 * price_similarity + 0.25 * review_similarity + 0.25 * (
-                    geo_distance1 + geo_distance2) / 2
-
-        return edge_weight
-
 
 class User:
     """
@@ -540,12 +535,11 @@ def load_graph(rest_file: str) -> CategoryGraph:
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
 
-    vertex_names = list(graph.vertices().keys())
-    for i, name1 in enumerate(vertex_names):
-        for name2 in vertex_names[i + 1:]:  # Avoid connecting a vertex with itself and duplicate edges
-            if name1 != name2:  # Additional check to avoid self-loop, might be redundant
-                edge_weight = graph.calculate_edge(graph.vertices[name1], graph.vertices[name2])
-                graph.add_edge(name1, name2, edge_weight)
+    all_vertices = graph.get_all_vertices()
+    for i, vertex1 in enumerate(all_vertices):
+        for vertex2 in all_vertices[i + 1:]:
+            edge_weight = vertex1.calculate_edge(vertex2)  # Assuming calculate_edge is a method in _CategoryVertex
+            graph.add_edge(vertex1.name, vertex2.name, edge_weight)
 
     return graph
 
