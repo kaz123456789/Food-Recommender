@@ -15,14 +15,6 @@ import csv
 read_lines = []
 
 
-def read_inputs(lines: list[str], new_line: str) -> None:
-    """
-    Keep track of the read lines.
-    """
-    if new_line not in lines:
-        lines.append(new_line)
-
-
 def read_latest_input_from_csv(lines: list[str], file: str) -> str:
     """
     Reads the only line in the CSV file, which is the latest user input.
@@ -31,7 +23,8 @@ def read_latest_input_from_csv(lines: list[str], file: str) -> str:
         reader = csv.reader(file)
         for row in reader:  # There should only be one row
             if row not in lines:
-                return row
+                lines.append(row[0])
+                return lines[-1]
 
 
 if __name__ == "__main__":
@@ -42,31 +35,26 @@ if __name__ == "__main__":
 
     all_users = AllUsers()
     while not quit_game:
-        user_input = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
-        read_inputs(read_lines, user_input)
-        user = User(user_input)
+        # The first round of recommending restaurants (randomly).
+        user_name = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+        user = User(user_name)
         if user not in all_users.list_of_users:
             all_users.list_of_users.append(user)
-            print(f"Welcome to FOODER, {user_input}!")
+            print(f"Welcome to FOODER, {user_name}!")
         else:
-            print(f"Welcome back to FOODER, {user_input}! We are confident to find you a "
+            print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
                   f"matching restaurant this time, too!")
+        random_res = user.recommend_restaurants(restaurant_graph)
+        for res in random_res:
+            print(res.name)
+        satisfy = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+        user.last_visit(restaurant_graph.vertices()[satisfy])
+        user.feedback_on_last_visit(satisfy in restaurant_graph.vertices().keys())
 
-        # category, price range, max distance acceptable
-        first_filter = []
-        user_input = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
-        read_inputs(read_lines, user_input)
-        first_filter.append(user_input)
-
-        user_input = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
-        read_inputs(read_lines, user_input)
-        first_filter.append(user_input)
-
-        user_input = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
-        read_inputs(read_lines, user_input)
-        first_filter.append(user_input)
-
-
+        # Ask user if they want to try again, if no, quit the game, is yes, continue.
+        if_quit = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
+        if if_quit == 'yes':
+            quit_game = True
 
 
 
