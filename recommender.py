@@ -316,6 +316,19 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
+    def get_similarity_score(self, name1: Any, name2: Any) -> float:
+        """
+        Return the similarity score between the two given items in this graph.
+
+        Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
+        """
+
+        if name1 not in self._vertices or name2 not in self._vertices:
+            raise ValueError
+        v1 = self._vertices[name1]
+        v2 = self._vertices[name2]
+        return v1.similarity_score(v2)
+
     def top_restaurant(self) -> str:
         """
         Run the recommender and return the top restaurant based on user preference:
@@ -331,12 +344,12 @@ class CategoryGraph(Graph):
         user_input = get_user_input(rest_questions, restaurants_type)
         category, distance_range, price_range = user_input
         player_lat, player_lon = get_location_from_ip()
-        top_res = self.recommend_top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
+        top_res = self.top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
 
         return top_res.name
 
-    def recommend_top_reviewed_restaurant(self, desired_cuisine: str, user_lat: float, user_lon: float,
-                                          max_distance: float, price: int) -> _CategoryVertex:
+    def top_reviewed_restaurant(self, desired_cuisine: str, user_lat: float, user_lon: float,
+                                max_distance: float, price: int) -> _CategoryVertex:
         """
         Recommend the top restaurant (as a _CategoryVertex, not the name of the restaurant)
         based on user location and user's preference of cuisine type, maximum acceptable distance,
@@ -355,21 +368,20 @@ class CategoryGraph(Graph):
 
         return res_recommendations[0]
 
-    def recommend_restaurants(self, restaurant: str, number: int) -> list[str]:
+    def final_recommend_restaurants(self, restaurant: str, number: int) -> list[str]:
         """
         Recommend the top number (i.e. 3, 4, etc.) restaurants by calculating the similarity scores
         between restaurant and the restaurants with the same category/price range and return a list
         of length number.
         """
-        qualifying_restaurants = []
-        for restaurant in self._vertices.values():
-            if (restaurant.category == desired_cuisine
-                    and restaurant.is_within_distance(max_distance, user_lat, user_lon)
-                    and restaurant.price_range == price):
-                if (restaurant.review_rate, restaurant) not in qualifying_restaurants:
-                    qualifying_restaurants.append((restaurant.review_rate, restaurant))
+        recommendations = []
+        for res in self._vertices.values():
+            if res.name != restaurant:
+                sim_score = self.get_similarity_score(res, restaurant)
+                if (res.review_rate, restaurant) not in recommendations:
+                    recommendations.append((sim_score, restaurant))
 
-        sorted_recommendations = sorted(qualifying_restaurants, reverse=True)
+        sorted_recommendations = sorted(recommendations, reverse=True)
         final_recommendations = [score[1] for score in sorted_recommendations]
 
         return final_recommendations[:number]
