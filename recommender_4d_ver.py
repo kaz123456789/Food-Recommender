@@ -346,24 +346,24 @@ class CategoryGraph(Graph):
         v2 = self._vertices[name2]
         return v1.similarity_score(v2)
 
-    def top_restaurant(self) -> str:
-        """
-        Run the recommender and return the top restaurant based on user preference:
-        type of cuisine, maximum acceptable distance, and the price range.
-        """
-        restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
-                            7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
-
-        rest_questions = ['What is your preferred type of cuisine?',
-                          'What is the maximum distance of restaurants you are looking for (in km)?',
-                          'What price range are you looking for?']
-
-        user_input = get_user_input(rest_questions, restaurants_type)
-        category, distance_range, price_range = user_input
-        player_lat, player_lon = get_location_from_ip()
-        top_res = self.top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
-
-        return top_res.name
+    # def top_restaurant(self) -> str:
+    #     """
+    #     Run the recommender and return the top restaurant based on user preference:
+    #     type of cuisine, maximum acceptable distance, and the price range.
+    #     """
+    #     restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+    #                         7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
+    #
+    #     rest_questions = ['What is your preferred type of cuisine?',
+    #                       'What is the maximum distance of restaurants you are looking for (in km)?',
+    #                       'What price range are you looking for?']
+    #
+    #     user_input = get_user_input(rest_questions, restaurants_type)
+    #     category, distance_range, price_range = user_input
+    #     player_lat, player_lon = get_location_from_ip()
+    #     top_res = self.top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
+    #
+    #     return top_res.name
 
     def top_reviewed_restaurant(self, desired_cuisine: str, user_lat: float, user_lon: float,
                                 max_distance: float, price: int) -> _CategoryVertex:
@@ -530,7 +530,10 @@ def load_graph(rest_file: str) -> CategoryGraph:
         next(reader, None)  # Skip the header row
         for row in reader:
             category, address, name, price_range, review_rate, loc = row
-            location = tuple(float(val.strip()) for val in loc.split(','))
+            location = tuple(val.strip() for val in loc.split(','))
+            latitude = float(location[0])
+            longitude = float(location[1])
+            location = (latitude, longitude)
             review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
