@@ -282,6 +282,10 @@ class CategoryGraph(Graph):
         # This call isn't necessary, except to satisfy PythonTA.
         Graph.__init__(self)
 
+    def vertices(self):
+        # This allows the outside code to read the vertices
+        return self._vertices.values()
+
     def add_vertex(self, category: str, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
         """Add a vertex with the given attributes to this graph.
@@ -292,17 +296,7 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-    def add_whole_vertex(self, edge: str | int, vertex: _CategoryVertex) -> None:
-        """Add a WHOLE/exiting vertex to this graph.
-
-        The new vertex is not adjacent to any other vertices.
-        Do nothing if the given item is already in this graph.
-
-        """
-        if v not in self._vertices:
-            self._vertices[v] = vertex
-
-    def add_edge(self, name1: Any, name2: Any, category: str = '') -> None:
+    def add_edge(self, name1: Any, name2: Any, edge_type: Union[str, int] = '') -> None:
         """Add an edge between the two vertices with the given items in this graph,
         with the given weight.
 
@@ -316,8 +310,8 @@ class CategoryGraph(Graph):
             v2 = self._vertices[name2]
 
             # Add the new edge
-            v1.neighbours[v2] = category
-            v2.neighbours[v1] = category
+            v1.neighbours[v2] = edge_type
+            v2.neighbours[v1] = edge_type
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
@@ -420,7 +414,7 @@ def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int
 
 
 # Load the graph of all the restaurants.
-def load_graph(rest_file: str) -> CategoryGraph:
+def load_graph(rest_file: str, edge_type: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
     The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
@@ -438,8 +432,19 @@ def load_graph(rest_file: str) -> CategoryGraph:
             latitude = float(location[0])
             longitude = float(location[1])
             location = (latitude, longitude)
+            review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
+
+    vertices = list(graph.vertices())  # Assuming _vertices stores vertex objects.
+    for i in range(len(vertices)):
+        for j in range(i + 1, len(vertices)):
+            vertex1 = vertices[i]
+            vertex2 = vertices[j]
+            if edge_type == 'category' and vertex1.category == vertex2.category:
+                graph.add_edge(vertex1, vertex2, vertex1.category)
+            elif edge_type == 'price_range' and vertex1.price_range == vertex2.price_range:
+                graph.add_edge(vertex1, vertex2, vertex1.price_range)
 
     return graph
 
