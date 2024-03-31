@@ -17,10 +17,6 @@ import requests
 import math
 import random
 
-# The cuisine type each number represents in the csv data file.
-restaurants_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
-                    7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
-
 
 def get_location_from_ip() -> tuple[float, float]:
     """

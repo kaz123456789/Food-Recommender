@@ -14,6 +14,12 @@ import csv
 
 read_lines = []
 
+# The cuisine type each number represents in the csv data file.
+cuisine_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+                    7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
+
+price_range = {1: 'Under $10', 2: '$11-30', 3: '$31-60', 4: 'Above $61'}
+
 
 def read_latest_input_from_csv(lines: list[str], file: str) -> str:
     """
@@ -29,20 +35,18 @@ def read_latest_input_from_csv(lines: list[str], file: str) -> str:
 
 def get_price_range(num: int) -> str:
     """
-    Return the corresponding price range according to the input number.
-    1 = under $10
-    2 = $11~30
-    3 = $31~60
-    4 = above $60
+    Return the corresponding price range according to the dictionary mapping
+    cuisine type.
     """
-    if num == 1:
-        return 'under $10'
-    elif num == 2:
-        return '$11~30'
-    elif num == 3:
-        return '$31~60'
-    else:
-        return 'above $60'
+    return price_range[num]
+
+
+def get_category(num: int) -> str:
+    """
+    Return the corresponding category according to the dictionary mapping
+    price_range.
+    """
+    return cuisine_type[num]
 
 
 def record_last_visit(u: User, g: CategoryGraph, restaurant: str) -> None:
