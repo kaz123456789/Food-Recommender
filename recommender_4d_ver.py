@@ -422,6 +422,65 @@ class CategoryGraph(Graph):
         """
         return self._vertices[name].address
 
+    def get_all_restaurants(self) -> list[_CategoryVertex]:
+        """Return a list of all restaurant vertices in the graph."""
+        # Ensure that _vertices.values() are actually instances of _CategoryVertex
+        return list(self._vertices.values())
+
+    def get_random_restaurant(self) -> _CategoryVertex:
+        """Return a random restaurant from the graph."""
+        if self._vertices:
+            return random.choice(list(self._vertices.values()))
+
+
+class User:
+    """
+    Represents a user in the restaurant recommender system.
+
+    Attributes:
+        name (str): The name of the user.
+        last_visited_restaurant (_CategoryVertex): The last restaurant visited by the user based on the system's
+        recommendation.
+        disliked_restaurants (set[_CategoryVertex]): A set of restaurants that the user did not like.
+    """
+
+    def __init__(self, name: str):
+        self.name = name
+        self.last_visited_restaurant = None
+        self.disliked_restaurants = set()
+
+    def visit_restaurant(self, restaurant: _CategoryVertex):
+        """
+        Record the last visited restaurant based on the recommendation.
+        """
+        self.last_visited_restaurant = restaurant
+
+    def feedback_on_last_visit(self, is_satisfied: bool):
+        """Ask user if they are satisfied with the last visited restaurant."""
+        if is_satisfied:
+            print(f"I'm so glad to hear that! I will recommend more restaurants like "
+                  f"{self.last_visited_restaurant.name} in future recommendations.")
+        else:
+            print(f"We are sorry you didn't enjoy it. We will avoid recommending it in the future.")
+            self.disliked_restaurants.add(self.last_visited_restaurant)
+            self.last_visited_restaurant = None
+
+    def recommend_restaurants(self, graph: CategoryGraph) -> list[_CategoryVertex]:
+        """
+        Recommend restaurants based on user's history and feedback if exists.
+        Otherwise, randomly generate a recommendation from the entire graph.
+        """
+        if not self.last_visited_restaurant:
+            all_restaurants = graph.get_all_restaurants()
+            filtered_restaurants = [r for r in all_restaurants if r not in self.disliked_restaurants]
+            return [random.choice(filtered_restaurants)] if filtered_restaurants else []
+
+        neighbours = graph.get_neighbours(self.last_visited_restaurant.name)
+        recommendations = [self.last_visited_restaurant] + list(neighbours)
+        filtered_recommendations = [rest for rest in recommendations if rest not in self.disliked_restaurants]
+
+        return filtered_recommendations
+
 
 # fqy
 def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int]:
