@@ -240,7 +240,7 @@ class _CategoryVertex(_Vertex):
         p2 = (other.category, other.price_range, other.review_rate,
               calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
 
-        distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
+        distance = math.sqrt(sum((float(p1[i]) - float(p2[i])) ** 2 for i in range(4)))
         return distance
 
     def calculate_user_feedback(self, feedback: str) -> None:
@@ -368,20 +368,6 @@ class CategoryGraph(Graph):
             raise ValueError
 
 
-class AllUsers:
-    """
-    Represents all the users in the food recommender. No instance objects share the same name.
-
-    Instance Attributes:
-        - list_of_users (User): A list of users that have used the FOODER
-    """
-    list_of_users: list[User]
-
-    def __init__(self) -> None:
-        """Initialize AllUsers with an empty list of users."""
-        self.list_of_users = []
-
-
 class User:
     """
     Represents a user in the restaurant recommender system.
@@ -448,6 +434,33 @@ def load_graph(rest_file: str) -> CategoryGraph:
     #         graph.add_edge(vertex1.name, vertex2.name, edge_weight)
     #
     return graph
+
+
+class AllUsers:
+    """
+    Represents all the users in the food recommender. No instance objects share the same name.
+
+    Instance Attributes:
+        - list_of_users (User): A list of users that have used the FOODER
+    """
+    list_of_users: dict[str, User]
+
+    def __init__(self) -> None:
+        """Initialize AllUsers with an empty list of users."""
+        self.list_of_users = {}
+
+    def add_new_user(self, name: str, u: User) -> None:
+        """
+        Add a new user to the list.
+        """
+        self.list_of_users[name] = u
+
+    def existing_user(self, user_name: str) -> User:
+        """
+        return the existing user form the list.
+        """
+        return self.list_of_users[user_name]
+
 
 
 if __name__ == '__main__':
