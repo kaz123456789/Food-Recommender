@@ -53,19 +53,22 @@ if __name__ == "__main__":
         new_game = False
         print("Welcome!This is the restaurant recommender FOODER. \n")
         all_users = AllUsers()
+        user = None
 
         while not new_game:
             user_name = input('Pleaser enter your name: \n')
-            user = User(user_name)
-
-            if user not in all_users.list_of_users:
-                all_users.list_of_users.append(user)
+            if user_name not in all_users.list_of_users:
+                user = User(user_name)
+                all_users.add_new_user(user_name, user)
                 print(f"Welcome to FOODER, {user_name}!\n")
             else:
+                user = all_users.existing_user(user_name)
                 print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
                       f"matching restaurant this time, too!")
 
             if user.last_visited_restaurant:
+                print(f'Last time you had {user.last_visited_restaurant.name}, based on your selection, '
+                      f'these are the restaurants you may also like:')
                 you_may_like = restaurant_graph.most_similar_restaurants(user.last_visited_restaurant.name)
                 restaurant_graph.similar_rest_all_connected(user.last_visited_restaurant.name)
 
