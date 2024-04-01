@@ -19,24 +19,29 @@ def save_input():
     """
     save user input in 'user_input.txt'
     """
-
-    with open("user_input.txt", "w") as file:
-        for i in range(1, 4):
-            file.write(get_user_input(i))
-
-
-def get_user_input(n: int) -> str:
-    """
-    get user inputs
-    """
     while True:
-        user_input = simpledialog.askstring("Input", f"Enter your input{n}:") + '\n'
+        user_input = simpledialog.askstring("Input", "亲爱的江山，Enter your Name:") + '\n'
         if user_input == '\n':
-            messagebox.showwarning("Warning", "Input cannot be empty. Please enter your input.")
+            messagebox.showwarning("Warning", "Input cannot be empty. Please enter your name.")
         else:
-            messagebox.showinfo("Success", f"Input{n} saved successfully!")
+            messagebox.showinfo("Success", "Thank you!")
             break
-    return user_input
+    with open("user_input.txt", "w") as file:
+        file.write(user_input)
+
+
+# def get_user_input(n: int) -> str:
+#     """
+#     get user inputs
+#     """
+#     while True:
+#         user_input = simpledialog.askstring("Input", f"Enter your input{n}:") + '\n'
+#         if user_input == '\n':
+#             messagebox.showwarning("Warning", "Input cannot be empty. Please enter your input.")
+#         else:
+#             messagebox.showinfo("Success", f"Input{n} saved successfully!")
+#             break
+#     return user_input
 
 
 def main():
