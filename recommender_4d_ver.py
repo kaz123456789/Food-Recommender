@@ -13,9 +13,9 @@ from __future__ import annotations
 import csv
 from typing import Any
 
-import requests
 import math
 import random
+import requests
 
 
 def get_location_from_ip() -> tuple[float, float]:
@@ -244,7 +244,7 @@ class _CategoryVertex(_Vertex):
         """
         Calculate the user feedback / review rate.
         """
-        if feedback.lower() == 'yes':
+        if 'yes' in feedback.lower():
             if self.review_rate < 3.0:
                 self.review_rate += 0.5
             elif self.review_rate < 5.0:
@@ -324,7 +324,7 @@ class CategoryGraph(Graph):
         v2 = self._vertices[name2]
         return v1.similarity_score(v2)
 
-    def most_similar_restaurants_all_connected(self, restaurant: str) -> None:
+    def similar_rest_all_connected(self, restaurant: str) -> None:
         """
         Connects restaurant to its top 5 most similar restaurants based on similarity scores.
         """
@@ -361,6 +361,8 @@ class CategoryGraph(Graph):
         """Return a random restaurant from the graph."""
         if self._vertices:
             return random.choice(list(self._vertices.values()))
+        else:
+            raise ValueError
 
 
 class AllUsers:
@@ -372,7 +374,8 @@ class AllUsers:
     """
     list_of_users: list[User]
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """Initialize AllUsers with an empty list of users."""
         self.list_of_users = []
 
 
@@ -390,23 +393,12 @@ class User:
     last_visited_restaurant: _CategoryVertex | None
     disliked_restaurants: set[_CategoryVertex]
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
+        """Initialize a user with their name, the lastest resturant they visited and a set of restaurants they dislike.
+        """
         self.name = name
         self.last_visited_restaurant = None
         self.disliked_restaurants = set()
-
-    def feedback_on_last_visit(self, is_satisfied: str) -> None:
-        """Ask user if they are satisfied with the last visited restaurant and mutate the rating of the
-        restaurants based on the feedback."""
-        if is_satisfied.lower() == 'yes':
-            print(f"I'm so glad to hear that! I will recommend you more restaurants like "
-                  f"{self.last_visited_restaurant.name} in future recommendations.")
-            self.last_visited_restaurant.calculate_user_feedback('yes')
-        else:
-            print(f"We are sorry to hear that you didn't enjoy it. We will avoid recommending it in the future.")
-            self.disliked_restaurants.add(self.last_visited_restaurant)
-            self.last_visited_restaurant.calculate_user_feedback('no')
-            self.last_visited_restaurant = None
 
     def recommend_restaurants(self, graph: CategoryGraph) -> list[_CategoryVertex]:
         """

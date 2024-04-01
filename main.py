@@ -36,7 +36,7 @@ def get_category(num: int) -> str:
     return cuisine_type[num]
 
 
-def record_last_visit(u: User, g: CategoryGraph, restaurant: str) -> None:
+def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
     """
     Record the last visited restaurant based on the recommendation.
     """
@@ -66,31 +66,42 @@ if __name__ == "__main__":
 
             if user.last_visited_restaurant:
                 you_may_like = restaurant_graph.most_similar_restaurants(user.last_visited_restaurant.name)
-                restaurant_graph.most_similar_restaurants_all_connected(user.last_visited_restaurant.name)
+                restaurant_graph.similar_rest_all_connected(user.last_visited_restaurant.name)
+
             else:
+                final_rest = None
                 random_rest = restaurant_graph.get_random_restaurant()
                 try_random = input(f'Do you want to try: {random_rest.name}? Pleaser enter \'yes\' or \'no\': \n')
-                if try_random.lower() == 'no':
+                if 'yes' in try_random.lower():
+                    final_rest = random_rest
+                elif 'no' in try_random.lower():
+                    print('Then I\'ll recommend you 5 random resturants: ')
                     random_rests = user.recommend_restaurants(restaurant_graph)
                     for rest in random_rests:
-                        print(f'{rest}')
+                        print(f'{rest.name}')
                     satisfied_rest = input(
                         'Pick one restaurant from the following that matches with your taste the most:')
-                    record_last_visit(user, restaurant_graph, satisfied_rest)
-
-                price_range = get_price_range(int(random_rest.price_range))
-                print(f'Congratulations! You\'ve matched with your restaurant: {random_rest.name}!' +
-                      '\n Details about the restaurant:' + f'\n Address: {random_rest.address}'
-                      + f'\n Price range: {price_range}')
+                    final_rest = CategoryGraph.get_vertex(restaurant_graph, satisfied_rest)
+                    record_last_visited(user, restaurant_graph, satisfied_rest)
+                record_last_visited(user, restaurant_graph, random_rest.name)
+                price_range = get_price_range(int(final_rest.price_range))
+                print(f'Congratulations! You\'ve matched with your restaurant: {final_rest.name}!' +
+                      '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
+                      + f'\nPrice range: {price_range}')
                 satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':')
-                user.feedback_on_last_visit(satisfy)
+                if 'yes' in satisfy:
+                    print(f"I'm so glad to hear that! I will recommend you more restaurants like "
+                          f"{final_rest.name} in future recommendations.")
+                    user.last_visited_restaurant.calculate_user_feedback('yes')
+                else:
+                    print("We are sorry to hear that you didn't enjoy it. We will avoid recommending it in the future.")
+                    user.disliked_restaurants.add(user.last_visited_restaurant)
+                    user.last_visited_restaurant.calculate_user_feedback('no')
+                    user.last_visited_restaurant = None
 
-                again = input('Do you want to start a new game or end the game? Pleaser enter \'new game\' or \'quit\':')
+                again = input('Do you want to get more recommendations? Pleaser enter \'new round\' or \'quit\':')
                 if again == 'quit':
                     quit_game = True
+                    break
 
     print('Thank you for choosing the best restaurant recommender FOODER! It\'s our pleasure to assist you!')
-
-
-
-
