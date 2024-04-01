@@ -240,7 +240,7 @@ class _CategoryVertex(_Vertex):
         p2 = (other.category, other.price_range, other.review_rate,
               calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
 
-        distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
+        distance = math.sqrt(sum((float(p1[i]) - float(p2[i])) ** 2 for i in range(4)))
         return distance
 
     def calculate_user_feedback(self, feedback: str) -> None:
