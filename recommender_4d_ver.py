@@ -386,10 +386,10 @@ class User:
         self.last_visited_restaurant = None
         self.disliked_restaurants = set()
 
-    def feedback_on_last_visit(self, is_satisfied: bool) -> None:
+    def feedback_on_last_visit(self, is_satisfied: str) -> None:
         """Ask user if they are satisfied with the last visited restaurant and mutate the rating of the
         restaurants based on the feedback."""
-        if is_satisfied:
+        if is_satisfied.lower() == 'yes':
             print(f"I'm so glad to hear that! I will recommend you more restaurants like "
                   f"{self.last_visited_restaurant.name} in future recommendations.")
             self.last_visited_restaurant.calculate_user_feedback('yes')

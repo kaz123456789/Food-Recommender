@@ -47,59 +47,51 @@ def record_last_visit(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 if __name__ == "__main__":
     restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
-    quit_game = False
+    new_game = False
+    while not new_game:
+        quit_game = False
 
-    print("Welcome!This is the restaurant recommender FOODER. \n")
+        print("Welcome!This is the restaurant recommender FOODER. \n")
 
-    all_users = AllUsers()
-    while not quit_game:
-        user_name = input('Pleaser enter your name: ')
-        user = User(user_name)
+        all_users = AllUsers()
+        while not quit_game:
+            user_name = input('Pleaser enter your name: ')
+            user = User(user_name)
 
-        if user not in all_users.list_of_users:
-            all_users.list_of_users.append(user)
-            print(f"Welcome to FOODER, {user_name}!")
-        else:
-            print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
-                  f"matching restaurant this time, too!")
+            if user not in all_users.list_of_users:
+                all_users.list_of_users.append(user)
+                print(f"Welcome to FOODER, {user_name}!")
+            else:
+                print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
+                      f"matching restaurant this time, too!")
 
-        if user.last_visited_restaurant:
-            you_may_like = restaurant_graph.most_similar_restaurants(user.last_visited_restaurant.name)
-            restaurant_graph.most_similar_restaurants_all_connected(user.last_visited_restaurant.name)
-        else:
-            random_rest = restaurant_graph.get_random_restaurant()
-            price_range = get_price_range(random_rest.price_range)
-            satisfy_with_first = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\': ')
+            if user.last_visited_restaurant:
+                you_may_like = restaurant_graph.most_similar_restaurants(user.last_visited_restaurant.name)
+                restaurant_graph.most_similar_restaurants_all_connected(user.last_visited_restaurant.name)
+            else:
+                random_rest = restaurant_graph.get_random_restaurant()
+                price_range = get_price_range(random_rest.price_range)
+                satisfy_with_first = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\': ')
 
-            if satisfy_with_first.lower() == 'no':
-                random_rests = user.recommend_restaurants(restaurant_graph)
-                for rest in random_rests:
-                    print(f'{rest}')
-                satisfied_rest = input('Pick one restaurant from the following that matches with your taste the most:')
-                record_last_visit(user, restaurant_graph, satisfied_rest)
+                if satisfy_with_first.lower() == 'no':
+                    random_rests = user.recommend_restaurants(restaurant_graph)
+                    for rest in random_rests:
+                        print(f'{rest}')
+                    satisfied_rest = input('Pick one restaurant from the following that matches with your taste the most:')
+                    record_last_visit(user, restaurant_graph, satisfied_rest)
 
-            print(f'Congratulations! You\'ve matched with your restaurant: {random_rest.name}!' +
-                  '\n Details about the restaurant:' + f'\n Address: {random_rest.address}'
-                  + f'\n Price range: {price_range}')
-            user.feedback_on_last_visit(satisfy in restaurant_graph.vertices().keys())
-            quit_game = True
+                print(f'Congratulations! You\'ve matched with your restaurant: {random_rest.name}!' +
+                      '\n Details about the restaurant:' + f'\n Address: {random_rest.address}'
+                      + f'\n Price range: {price_range}')
+                satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':')
+                user.feedback_on_last_visit(satisfy)
 
-            # Ask user if they want to try again, if no, quit the game, is yes, continue.
-            if_quit = read_latest_input_from_csv(read_lines, 'data/user_inputs.csv')
-
-        if if_quit == 'yes':
-            quit_game = True
-
-
-
-
+                again = input('Do you want to start a new game or end the game? Pleaser enter \'new game\' or \'quit\':')
+                if again == 'quit':
+                    new_game = True
+                else:
+                    quit_game = True
 
 
 
 
-
-
-
-    print('Congratulations! You\'ve find your restaurant match! We hope can enjoy the food there!')
-    print(f'Your final choice: {lst_of_rest[index]}' + '\n')
-    print(f'The the address of the restaurant: {address}')
