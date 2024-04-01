@@ -10,7 +10,20 @@ Copyright and Usage Information
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
-from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_location_from_ip
+from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph
+import requests
+
+
+def get_location_from_ip() -> tuple[float, float]:
+    """
+    Get the current location (latitude and longitude) based on the public IP address of the user.
+    """
+    response = requests.get('https://api64.ipify.org?format=json').json()
+    ip_address = response['ip']
+
+    location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
+    lat, lon = map(float, location_response.get('loc', '0,0').split(','))
+    return lat, lon
 
 
 read_lines = []
@@ -46,7 +59,8 @@ def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 
 if __name__ == "__main__":
-    restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
+    ip = get_location_from_ip()
+    restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv", ip)
 
     quit_game = False
     while not quit_game:
@@ -67,10 +81,30 @@ if __name__ == "__main__":
                       f"matching restaurant this time, too!")
 
             if user.last_visited_restaurant:
+                you_may_like = restaurant_graph.get_sim_rest(user.last_visited_restaurant.name)
                 print(f'Last time you had {user.last_visited_restaurant.name}, based on your selection, '
                       f'these are the restaurants you may also like:')
-                you_may_like = restaurant_graph.most_similar_restaurants(user.last_visited_restaurant.name)
-                restaurant_graph.similar_rest_all_connected(user.last_visited_restaurant.name)
+                for item in you_may_like:
+                    print(item)
+                satisfied_rest = input(
+                    'Pick one restaurant from the following that matches with your taste the most:')
+                final_rest = CategoryGraph.get_vertex(restaurant_graph, satisfied_rest)
+                record_last_visited(user, restaurant_graph, satisfied_rest)
+                price_range = get_price_range(int(final_rest.price_range))
+                print(f'\nCongratulations! You\'ve matched with your restaurant: {final_rest.name}!' +
+                      '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
+                      + f'\nPrice range: {price_range}\n')
+                satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':\n')
+                if 'yes' in satisfy:
+                    print(f"\nI'm so glad to hear that! I will recommend you more restaurants like "
+                          f"{final_rest.name} in future recommendations.\n")
+                    user.last_visited_restaurant.calculate_user_feedback('yes')
+                else:
+                    print("\nWe are sorry to hear that you didn't enjoy it. We will avoid recommending "
+                          "it in the future.\n")
+                    user.disliked_restaurants.add(user.last_visited_restaurant)
+                    user.last_visited_restaurant.calculate_user_feedback('no')
+                    user.last_visited_restaurant = None
 
             else:
                 final_rest = None
@@ -104,9 +138,9 @@ if __name__ == "__main__":
                     user.last_visited_restaurant.calculate_user_feedback('no')
                     user.last_visited_restaurant = None
 
-                again = input('Do you want to get more recommendations? Pleaser enter \'new round\' or \'quit\':\n')
-                if again == 'quit':
-                    quit_game = True
-                    break
+            again = input('Do you want to get more recommendations? Pleaser enter \'new round\' or \'quit\':\n')
+            if again == 'quit':
+                quit_game = True
+                break
 
     print('\nThank you for choosing the best restaurant recommender FOODER! It\'s our pleasure to assist you!')
