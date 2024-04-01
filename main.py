@@ -10,21 +10,8 @@ Copyright and Usage Information
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
+import recommender_4d_ver
 from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph
-import requests
-
-
-def get_location_from_ip() -> tuple[float, float]:
-    """
-    Get the current location (latitude and longitude) based on the public IP address of the user.
-    """
-    response = requests.get('https://api64.ipify.org?format=json').json()
-    ip_address = response['ip']
-
-    location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
-    lat, lon = map(float, location_response.get('loc', '0,0').split(','))
-    return lat, lon
-
 
 read_lines = []
 
@@ -59,7 +46,7 @@ def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 
 if __name__ == "__main__":
-    ip = get_location_from_ip()
+    ip = recommender_4d_ver.get_location_from_ip()
     restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv", ip)
 
     quit_game = False
@@ -81,7 +68,7 @@ if __name__ == "__main__":
                       f"matching restaurant this time, too!")
 
             if user.last_visited_restaurant:
-                you_may_like = restaurant_graph.get_sim_rest(user.last_visited_restaurant.name)
+                you_may_like = restaurant_graph.get_sim_rest(user.last_visited_restaurant.name, ip)
                 print(f'Last time you had {user.last_visited_restaurant.name}, based on your selection, '
                       f'these are the restaurants you may also like:')
                 for item in you_may_like:

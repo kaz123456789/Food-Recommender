@@ -18,6 +18,19 @@ from typing import Any
 
 import math
 import random
+import requests
+
+
+def get_location_from_ip() -> tuple[float, float]:
+    """
+    Get the current location (latitude and longitude) based on the public IP address of the user.
+    """
+    response = requests.get('https://api64.ipify.org?format=json').json()
+    ip_address = response['ip']
+
+    location_response = requests.get(f'https://ipinfo.io/{ip_address}/json').json()
+    lat, lon = map(float, location_response.get('loc', '0,0').split(','))
+    return lat, lon
 
 
 def calculate_euclidean_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -307,20 +320,25 @@ class CategoryGraph(Graph):
             # We didn't find an existing vertex for both items.
             raise ValueError
 
-    def get_similarity_score(self, v1: Any, v2: Any, ip: tuple[float, float]) -> float:
+    def get_similarity_score(self, name1: Any, name2: Any, ip: tuple[float, float]) -> float:
         """
         Return the similarity score between the two given items in this graph.
 
         Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
         """
+        v1 = self._vertices[name1]
+        v2 = self._vertices[name2]
 
         return v1.similarity_score(v2, ip)
 
-    def get_sim_rest(self, restaurant: str) -> list[str]:
+    def get_sim_rest(self, restaurant: str, ip: tuple[float, float]) -> list[str]:
         """
         Return a list of resturants based on the similarity scores.
         """
 
+        # v = self._vertices[restaurant]
+        # return [key.name for key in v.neighbours]
+        self.similar_rest_all_connected(restaurant, ip)
         v = self._vertices[restaurant]
         return [key.name for key in v.neighbours]
 
@@ -328,12 +346,11 @@ class CategoryGraph(Graph):
         """
         Connects restaurant to its top 5 most similar restaurants based on similarity scores.
         """
-        similar_res_names = self.most_similar_restaurants(restaurant)
+        similar_res_names = self.most_similar_restaurants(restaurant, ip)
 
         for res in similar_res_names:
             s_score = self.get_similarity_score(res, restaurant, ip)
-            if s_score <= 0.1:
-                self.add_edge(res, restaurant, s_score)
+            self.add_edge(res, restaurant, s_score)
 
     def most_similar_restaurants(self, base_restaurant: str, ip: tuple[float, float]) -> list[str]:
         """
@@ -369,10 +386,6 @@ class CategoryGraph(Graph):
         else:
             raise ValueError
 
-    @property
-    def vertices(self):
-        return self._vertices
-
 
 class User:
     """
@@ -395,13 +408,13 @@ class User:
         self.last_visited_restaurant = None
         self.disliked_restaurants = set()
 
-    def recommend_restaurants(self, graph: CategoryGraph) -> list[_CategoryVertex]:
+    def recommend_restaurants(self, graph: CategoryGraph, ip: tuple[float, float]) -> list[_CategoryVertex]:
         """
         Recommend restaurants based on user's history and feedback if exists.
         Otherwise, randomly generate a recommendation from the entire graph.
         """
         if self.last_visited_restaurant and self.last_visited_restaurant not in self.disliked_restaurants:
-            similar_restaurants = graph.most_similar_restaurants(self.last_visited_restaurant.name)
+            similar_restaurants = graph.most_similar_restaurants(self.last_visited_restaurant.name, ip)
             return [self.last_visited_restaurant] + similar_restaurants
         else:
             all_restaurants = graph.get_all_restaurants()
@@ -409,14 +422,13 @@ class User:
             return random.sample(filtered_restaurants, min(5, len(filtered_restaurants)))
 
 
-def load_graph(rest_file: str, ip: tuple[float, float]) -> CategoryGraph:
+def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
     The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
     'Restaurant Price Range', 'Restaurant Location' and 'Review Rates'.
     """
     graph = CategoryGraph()
-    index = 0
 
     with open(rest_file, 'r', encoding='cp1252') as file:  # Assuming CP1252 encoding
         reader = csv.reader(file)
@@ -433,23 +445,6 @@ def load_graph(rest_file: str, ip: tuple[float, float]) -> CategoryGraph:
                 review_rate = float(review_rate)
             curr_v = _CategoryVertex(category, address, name, price, review_rate, location)
             graph.add_whole_vertex(curr_v)
-            if index != 0:
-                sim_score = graph.get_similarity_score(curr_v, pre_v, ip)
-                if sim_score <= 0.1:
-                    graph.add_edge(curr_v.name, pre_v.name, sim_score)
-
-            pre_v = curr_v
-            index += 1
-
-    # names = list(graph.vertices.keys())  # Get all the names (identifiers) of the vertices
-    # for i in range(len(names)):
-    #     for j in range(i + 1, len(names)):
-    #         # No need to check for similarity score threshold here as per your instruction, connect all
-    #         try:
-    #             score = graph.get_similarity_score(names[i], names[j])
-    #             graph.add_edge(names[i], names[j], score)
-    #         except ValueError as e:
-    #             print(f"Error adding edge: {e}")
 
     return graph
 
