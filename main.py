@@ -10,7 +10,6 @@ This the main file of our project.
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
 from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_location_from_ip
-import csv
 
 read_lines = []
 
@@ -47,20 +46,20 @@ def record_last_visit(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 if __name__ == "__main__":
     restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
-    new_game = False
-    while not new_game:
-        quit_game = False
 
+    quit_game = False
+    while not quit_game:
+        new_game = False
         print("Welcome!This is the restaurant recommender FOODER. \n")
-
         all_users = AllUsers()
-        while not quit_game:
-            user_name = input('Pleaser enter your name: ')
+
+        while not new_game:
+            user_name = input('Pleaser enter your name: \n')
             user = User(user_name)
 
             if user not in all_users.list_of_users:
                 all_users.list_of_users.append(user)
-                print(f"Welcome to FOODER, {user_name}!")
+                print(f"Welcome to FOODER, {user_name}!\n")
             else:
                 print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
                       f"matching restaurant this time, too!")
@@ -70,16 +69,16 @@ if __name__ == "__main__":
                 restaurant_graph.most_similar_restaurants_all_connected(user.last_visited_restaurant.name)
             else:
                 random_rest = restaurant_graph.get_random_restaurant()
-                price_range = get_price_range(random_rest.price_range)
-                satisfy_with_first = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\': ')
-
-                if satisfy_with_first.lower() == 'no':
+                try_random = input(f'Do you want to try: {random_rest.name}? Pleaser enter \'yes\' or \'no\': \n')
+                if try_random.lower() == 'no':
                     random_rests = user.recommend_restaurants(restaurant_graph)
                     for rest in random_rests:
                         print(f'{rest}')
-                    satisfied_rest = input('Pick one restaurant from the following that matches with your taste the most:')
+                    satisfied_rest = input(
+                        'Pick one restaurant from the following that matches with your taste the most:')
                     record_last_visit(user, restaurant_graph, satisfied_rest)
 
+                price_range = get_price_range(int(random_rest.price_range))
                 print(f'Congratulations! You\'ve matched with your restaurant: {random_rest.name}!' +
                       '\n Details about the restaurant:' + f'\n Address: {random_rest.address}'
                       + f'\n Price range: {price_range}')
@@ -88,9 +87,9 @@ if __name__ == "__main__":
 
                 again = input('Do you want to start a new game or end the game? Pleaser enter \'new game\' or \'quit\':')
                 if again == 'quit':
-                    new_game = True
-                else:
                     quit_game = True
+
+    print('Thank you for choosing the best restaurant recommender FOODER! It\'s our pleasure to assist you!')
 
 
 

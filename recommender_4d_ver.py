@@ -397,13 +397,8 @@ class User:
 
     def feedback_on_last_visit(self, is_satisfied: str) -> None:
         """Ask user if they are satisfied with the last visited restaurant and mutate the rating of the
-<<<<<<< HEAD
         restaurants based on the feedback."""
         if is_satisfied.lower() == 'yes':
-=======
-        retuarants based on the feedback."""
-        if is_satisfied:
->>>>>>> fa68ee88fc1ed623fcc5d36cc57577b597f5a740
             print(f"I'm so glad to hear that! I will recommend you more restaurants like "
                   f"{self.last_visited_restaurant.name} in future recommendations.")
             self.last_visited_restaurant.calculate_user_feedback('yes')
@@ -444,7 +439,10 @@ def load_graph(rest_file: str) -> CategoryGraph:
             latitude = float(location[0])
             longitude = float(location[1])
             location = (latitude, longitude)
-            review_rate = float(review_rate)
+            if review_rate == 'NA':
+                review_rate = 0
+            else:
+                review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
 
