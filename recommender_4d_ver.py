@@ -47,13 +47,13 @@ class _Vertex:
 
     Instance Attributes:
         - name: The data stored in this vertex, representing the name of the restaurant.
-        - category: The region of the restaurant (i.e. Chinese, Japanese...)
+        - category: The region of the restaurant belongs to (i.e. Chinese, Japanese...)
         - address: The address of the restaurant.
-        - price_range: A range of price of the restaurant.
+        - price_range: A number that represents the range of price of the restaurant.
         - location: The location of the restaurant as a tuple where the first parameter is the latitude
-        and the second parameter is the longitude
-        - review_rate: A rate range from 0 to 5 of the restaurant.
-        0 means the restaurant sucks and 5 means the restaurant is fantastic.
+        and the second parameter is the longitude.
+        - review_rate: A rate range from 0 to 5 of the restaurant, where 0 means the restaurant sucks
+        and 5 means the restaurant is fantastic.
         - neighbours: The vertices that are adjacent to this vertex.
 
     Representation Invariants:
@@ -73,7 +73,7 @@ class _Vertex:
     def __init__(self, category: int, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
         """
-        Initialize a new vertex with the category, address, given name, price range,
+        Initialize a new vertex with the category, address, name, price range,
         review rate, location (latitude, longitude).
         This vertex is initialized with no neighbours.
         """
@@ -132,7 +132,6 @@ class Graph:
             v1.neighbours.add(v2)
             v2.neighbours.add(v1)
         else:
-            # If either vertex is not in the graph, raise an error
             raise ValueError
 
     def adjacent(self, name1: Any, name2: Any) -> bool:
@@ -157,6 +156,16 @@ class Graph:
             return {neighbour.name for neighbour in v.neighbours}
         else:
             raise ValueError
+
+    def get_all_vertices(self, category: str = '') -> set:
+        """
+        Return a set of all vertex names in this graph.
+        If category != '', only return the items of the given vertex kind.
+        """
+        if category != '':
+            return {v.name for v in self._vertices.values() if v.category == category}
+        else:
+            return set(self._vertices.keys())
 
 
 class _CategoryVertex(_Vertex):
@@ -233,7 +242,7 @@ class _CategoryVertex(_Vertex):
 
     def calculate_user_feedback(self, feedback: str) -> None:
         """
-        Calculate the user feedback.
+        Calculate the user feedback / review rate.
         """
         if feedback.lower() == 'yes':
             if self.review_rate < 3.0:
@@ -388,7 +397,7 @@ class User:
 
     def feedback_on_last_visit(self, is_satisfied: bool) -> None:
         """Ask user if they are satisfied with the last visited restaurant and mutate the rating of the
-        restaurants based on the feedback."""
+        retuarants based on the feedback."""
         if is_satisfied:
             print(f"I'm so glad to hear that! I will recommend you more restaurants like "
                   f"{self.last_visited_restaurant.name} in future recommendations.")
@@ -413,8 +422,6 @@ class User:
             return random.sample(filtered_restaurants, min(5, len(filtered_restaurants)))
 
 
-# Load the graph of all the restaurants, where each restaurant is connected to
-# the rest of the restaurants.
 def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
