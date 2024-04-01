@@ -10,10 +10,31 @@ Copyright and Usage Information
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
-from recommender_4d_ver import (CategoryGraph, AllUsers, User, load_graph,
-                                get_location_from_ip, get_price_range)
+from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_location_from_ip
+
 
 read_lines = []
+
+cuisine_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+                7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
+
+p_range = {1: 'Under $10', 2: '$11-30', 3: '$31-60', 4: 'Above $61'}
+
+
+def get_price_range(num: int) -> str:
+    """
+    Return the corresponding price range according to the dictionary mapping
+    cuisine type.
+    """
+    return p_range[num]
+
+
+def get_category(num: int) -> str:
+    """
+    Return the corresponding category according to the dictionary mapping
+    price_range.
+    """
+    return cuisine_type[num]
 
 
 def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
