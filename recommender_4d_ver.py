@@ -337,23 +337,27 @@ class CategoryGraph(Graph):
             s_score = self.get_similarity_score(res, restaurant)
             self.add_edge(res, restaurant, s_score)
 
-    def most_similar_restaurants(self, restaurant: str) -> list[str]:
+    def most_similar_restaurants(self, base_restaurant: str) -> list[str]:
         """
         Recommend the top 5 most similar restaurants by calculating the similarity score
         between the restaurant and the rest of the restaurants, then return a list of
         the names of the top 5 similar restaurants.
         """
         recommendations = []
+        base_vertex = self._vertices.get(base_restaurant)
+
+        if base_vertex is None:
+            return []
+
         for res in self._vertices.values():
-            if res.name != restaurant:
-                sim_score = self.get_similarity_score(res.name, restaurant)
-                if (sim_score, restaurant) not in recommendations:
-                    recommendations.append((sim_score, restaurant))
+            if res.name != base_restaurant:
+                sim_score = self.get_similarity_score(base_restaurant, res.name)
+                recommendations.append((sim_score, res.name))
+                
+        sorted_recommendations = sorted(recommendations, reverse=True, key=lambda x: x[0])
+        final_recommendations = [name for _, name in sorted_recommendations[:5]]
 
-        sorted_recommendations = sorted(recommendations, reverse=True)
-        final_recommendations = [score[1] for score in sorted_recommendations]
-
-        return final_recommendations[:5]
+        return final_recommendations
 
     def get_all_restaurants(self) -> list[_CategoryVertex]:
         """Return a list of all restaurant vertices in the graph."""
