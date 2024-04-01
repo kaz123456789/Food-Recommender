@@ -1,10 +1,13 @@
 """
-CSC111 Project 2: Food Recommender
+CSC111 Project 2: Restaurant Recommender - FOODER
 
 Module Description
 ==================
-This module contains the Tree class and various methods and functions.
+This Python module contains new classes to represent *category graphs and vertices*,
+which we'll use to represent a restaurant recommender system with scores of restaurant
+similarity as well.
 
+Copyright and Usage Information
 ===============================
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.

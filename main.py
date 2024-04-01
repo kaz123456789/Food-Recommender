@@ -1,10 +1,11 @@
 """
-CSC111 Project 2: Food Recommender - FOODER
+CSC111 Project 2: Restaurant Recommender - FOODER
 
 Module Description
 ==================
 This the main file of our project.
 
+Copyright and Usage Information
 ===============================
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
