@@ -11,30 +11,7 @@ Copyright and Usage Information
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
 import recommender_4d_ver
-from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph
-
-read_lines = []
-
-cuisine_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
-                7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
-
-p_range = {1: 'Under $10', 2: '$11-30', 3: '$31-60', 4: 'Above $61'}
-
-
-def get_price_range(num: int) -> str:
-    """
-    Return the corresponding price range according to the dictionary mapping
-    cuisine type.
-    """
-    return p_range[num]
-
-
-def get_category(num: int) -> str:
-    """
-    Return the corresponding category according to the dictionary mapping
-    price_range.
-    """
-    return cuisine_type[num]
+from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_price_range
 
 
 def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
@@ -46,8 +23,18 @@ def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 
 if __name__ == "__main__":
+    import python_ta
+
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['E1136', 'W0221'],
+        'extra-imports': ['csv', 'networkx'],
+        'allowed-io': ['load_weighted_review_graph'],
+        'max-nested-blocks': 4
+    })
+
     ip = recommender_4d_ver.get_location_from_ip()
-    restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv", ip)
+    restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
 
     quit_game = False
     while not quit_game:
@@ -61,25 +48,25 @@ if __name__ == "__main__":
             if user_name not in all_users.list_of_users:
                 user = User(user_name)
                 all_users.add_new_user(user_name, user)
-                print(f"Welcome to FOODER, {user_name}!\n")
+                print(f"\nWelcome to FOODER, {user_name}!\n")
             else:
                 user = all_users.existing_user(user_name)
-                print(f"Welcome back to FOODER, {user_name}! We are confident to find you a "
+                print(f"\nWelcome back to FOODER, {user_name}! We are confident to find you a "
                       f"matching restaurant this time, too!")
 
             if user.last_visited_restaurant:
                 you_may_like = restaurant_graph.get_sim_rest(user.last_visited_restaurant.name, ip)
-                print(f'Last time you had {user.last_visited_restaurant.name}, based on your selection, '
+                print(f'\nLast time you had {user.last_visited_restaurant.name}, based on your selection, '
                       f'these are the restaurants you may also like:')
                 for item in you_may_like:
                     print(item)
                 satisfied_rest = input(
-                    'Pick one restaurant from the following that matches with your taste the most:')
+                    '\nPick one restaurant from the following that matches with your taste the most:')
                 final_rest = CategoryGraph.get_vertex(restaurant_graph, satisfied_rest)
                 record_last_visited(user, restaurant_graph, satisfied_rest)
                 price_range = get_price_range(int(final_rest.price_range))
-                print(f'\nCongratulations! You\'ve matched with your restaurant: {final_rest.name}!' +
-                      '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
+                print(f'\nCongratulations! You\'ve matched with your restaurant: {final_rest.name}!'
+                      + '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
                       + f'\nPrice range: {price_range}\n')
                 satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':\n')
                 if 'yes' in satisfy:
@@ -101,17 +88,17 @@ if __name__ == "__main__":
                     final_rest = random_rest
                 elif 'no' in try_random.lower():
                     print('Then I\'ll recommend you 5 random resturants: ')
-                    random_rests = user.recommend_restaurants(restaurant_graph)
+                    random_rests = user.recommend_restaurants(restaurant_graph, ip)
                     for rest in random_rests:
                         print(f'{rest.name}')
                     satisfied_rest = input(
-                        'Pick one restaurant from the following that matches with your taste the most:')
+                        '\nPick one restaurant from the following that matches with your taste the most:')
                     final_rest = CategoryGraph.get_vertex(restaurant_graph, satisfied_rest)
                     record_last_visited(user, restaurant_graph, satisfied_rest)
                 record_last_visited(user, restaurant_graph, random_rest.name)
                 price_range = get_price_range(int(final_rest.price_range))
-                print(f'\nCongratulations! You\'ve matched with your restaurant: {final_rest.name}!' +
-                      '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
+                print(f'\nCongratulations! You\'ve matched with your restaurant: {final_rest.name}!'
+                      + '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
                       + f'\nPrice range: {price_range}\n')
                 satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':\n')
                 if 'yes' in satisfy:

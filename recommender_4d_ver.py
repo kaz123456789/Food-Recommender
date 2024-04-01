@@ -20,6 +20,16 @@ import math
 import random
 import requests
 
+PRICE_RANGE = {1: 'Under $10', 2: '$11-30', 3: '$31-60', 4: 'Above $61'}
+
+
+def get_price_range(num: int) -> str:
+    """
+    Return the corresponding price range according to the dictionary mapping
+    cuisine type.
+    """
+    return PRICE_RANGE[num]
+
 
 def get_location_from_ip() -> tuple[float, float]:
     """
@@ -422,33 +432,6 @@ class User:
             return random.sample(filtered_restaurants, min(5, len(filtered_restaurants)))
 
 
-def load_graph(rest_file: str) -> CategoryGraph:
-    """Return a restaurant graph corresponding to the given datasets.
-
-    The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
-    'Restaurant Price Range', 'Restaurant Location' and 'Review Rates'.
-    """
-    graph = CategoryGraph()
-
-    with open(rest_file, 'r', encoding='cp1252') as file:  # Assuming CP1252 encoding
-        reader = csv.reader(file)
-        next(reader, None)  # Skip the header row
-        for row in reader:
-            category, address, name, price, review_rate, loc = row
-            location = tuple(val.strip() for val in loc.split(','))
-            latitude = float(location[0])
-            longitude = float(location[1])
-            location = (latitude, longitude)
-            if review_rate == 'NA':
-                review_rate = 0
-            else:
-                review_rate = float(review_rate)
-            curr_v = _CategoryVertex(category, address, name, price, review_rate, location)
-            graph.add_whole_vertex(curr_v)
-
-    return graph
-
-
 class AllUsers:
     """
     Represents all the users in the food recommender. No instance objects share the same name.
@@ -473,6 +456,33 @@ class AllUsers:
         return the existing user form the list.
         """
         return self.list_of_users[user_name]
+
+
+def load_graph(rest_file: str) -> CategoryGraph:
+    """Return a restaurant graph corresponding to the given datasets.
+
+    The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
+    'Restaurant Price Range', 'Restaurant Location' and 'Review Rates'.
+    """
+    graph = CategoryGraph()
+
+    with open(rest_file, 'r') as file:
+        reader = csv.reader(file)
+        next(reader, None)  # Skip the header row
+        for row in reader:
+            category, address, name, price, review_rate, loc = row
+            location = tuple(val.strip() for val in loc.split(','))
+            latitude = float(location[0])
+            longitude = float(location[1])
+            location = (latitude, longitude)
+            if review_rate == 'NA':
+                review_rate = 0
+            else:
+                review_rate = float(review_rate)
+            curr_v = _CategoryVertex(category, address, name, price, review_rate, location)
+            graph.add_whole_vertex(curr_v)
+
+    return graph
 
 
 if __name__ == '__main__':
