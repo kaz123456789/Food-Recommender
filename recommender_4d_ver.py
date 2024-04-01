@@ -1,25 +1,29 @@
 """
-CSC111 Project 2: Food Recommender
+CSC111 Project 2: Restaurant Recommender - FOODER
 
 Module Description
 ==================
-This module contains the Tree class and various methods and functions.
+This Python module contains new classes to represent *category graphs and vertices*,
+which we'll use to represent a restaurant recommender system with scores of restaurant
+similarity as well.
 
+Copyright and Usage Information
 ===============================
 
 This file is Copyright (c) Kathleen Wang, Jiner Zhang, Kimberly Fu, and Yanting Fan.
 """
 from __future__ import annotations
 import csv
-from typing import Any, Union
+from typing import Any
 
+import math
+import random
 import requests
-from math import radians, sin, cos, sqrt, atan2
 
 
 def get_location_from_ip() -> tuple[float, float]:
     """
-    Retrieve the current location (latitude and longitude) based on the public IP address of the user.
+    Get the current location (latitude and longitude) based on the public IP address of the user.
     """
     response = requests.get('https://api64.ipify.org?format=json').json()
     ip_address = response['ip']
@@ -29,44 +33,39 @@ def get_location_from_ip() -> tuple[float, float]:
     return lat, lon
 
 
-def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+def calculate_euclidean_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
-    Calculate the distance between two points on the earth specified in decimal degrees.
+    Calculate the distance between two points using the Euclidean distance formula.
     """
-    r = 6371.0  # Earth radius in kilometers
+    p1 = (lat1, lon1)
+    p2 = (lat2, lon2)
 
-    d_lat = radians(lat2 - lat1)
-    d_lon = radians(lon2 - lon1)
-    a = sin(d_lat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(d_lon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = r * c
+    distance = math.dist(p1, p2)
     return distance
 
 
 class _Vertex:
     """
-    Each vertex item is a restaurant, a string.
+    Each vertex item is a restaurant, represented by their name (str).
 
     Instance Attributes:
         - name: The data stored in this vertex, representing the name of the restaurant.
-        - category: The region of the restaurant (i.e. Chinese, Japanese...)
+        - category: The region of the restaurant belongs to (i.e. Chinese, Japanese...)
         - address: The address of the restaurant.
-        - price_range: A range of price of the restaurant.
+        - price_range: A number that represents the range of price of the restaurant.
         - location: The location of the restaurant as a tuple where the first parameter is the latitude
-        and the second parameter is the longitude
-        - review_rate: A rate range from 0 to 5 of the restaurant.
-        0 means the restaurant sucks and 5 means the restaurant is fantastic.
+        and the second parameter is the longitude.
+        - review_rate: A rate range from 0 to 5 of the restaurant, where 0 means the restaurant sucks
+        and 5 means the restaurant is fantastic.
         - neighbours: The vertices that are adjacent to this vertex.
 
     Representation Invariants:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
-        - self.category in {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
-        - self.price_range in {'1', '2', '3', '4'}
+        - (c in range(1, 13) for c in self.category)
+        - (p in range(1, 5) for p in self.price_range)
     """
-    category: str
+    category: int
     address: str
     name: Any
     price_range: int
@@ -74,10 +73,10 @@ class _Vertex:
     location: tuple[float, float]
     neighbours: set[_Vertex]
 
-    def __init__(self, category: str, address: str, name: str,
+    def __init__(self, category: int, address: str, name: str,
                  price_range: int, review_rate: float, location: tuple[float, float]) -> None:
         """
-        Initialize a new vertex with the category, address, given name, price range,
+        Initialize a new vertex with the category, address, name, price range,
         review rate, location (latitude, longitude).
         This vertex is initialized with no neighbours.
         """
@@ -96,7 +95,7 @@ class _Vertex:
 
 class Graph:
     """
-    A graph used to represent a categorized/price-ranged restaurants network.
+    A graph used to represent a restaurant system.
     """
     # Private Instance Attributes:
     #     - _vertices:
@@ -110,7 +109,7 @@ class Graph:
         """
         self._vertices = {}
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: int,
+    def add_vertex(self, category: int, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
         """
         Add a vertex with the given restaurant details to this graph.
@@ -136,7 +135,6 @@ class Graph:
             v1.neighbours.add(v2)
             v2.neighbours.add(v1)
         else:
-            # If either vertex is not in the graph, raise an error
             raise ValueError
 
     def adjacent(self, name1: Any, name2: Any) -> bool:
@@ -174,10 +172,10 @@ class Graph:
 
 
 class _CategoryVertex(_Vertex):
-    """A vertex in a categorized/price-ranged restaurant graph, used to represent a restaurant.
+    """A vertex that represent a restaurant in a restaurant system graph.
 
     Same documentation as _Vertex from above, except now neighbours is a dictionary mapping
-    a neighbour vertex to the category or price range of the edge to from self to that neighbour.
+    a neighbour vertex to the similarity score of the edge to from self to that neighbour.
 
     Instance Attributes:
         - name: The data stored in this vertex, representing the name of the restaurant.
@@ -193,20 +191,19 @@ class _CategoryVertex(_Vertex):
     Representation Invariants:
         - self not in self.neighbours
         - all(self in u.neighbours for u in self.neighbours)
-        - self.category in {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
-        - self.price_range in {'1', '2', '3', '4'}
-        - 0 <= self.review rate <= 5
+        - (c in range(1, 13) for c in self.category)
+        - (p in range(1, 5) for p in self.price_range)
+        - 0 <= self.review_rate <= 5
     """
-    category: str
+    category: int
     address: str
     name: Any
     price_range: int
     review_rate: float
     location: tuple[float, float]
-    neighbours: dict[_CategoryVertex, Union[str, int]]
+    neighbours: dict[_CategoryVertex, float]
 
-    def __init__(self, category: str, address: str, name: Any, price_range: int,
+    def __init__(self, category: int, address: str, name: Any, price_range: int,
                  review_rate: float, location: tuple[float, float]) -> None:
         """Initialize a new vertex with the given category, address, name, price_range, review_rate,
         and location.
@@ -214,45 +211,12 @@ class _CategoryVertex(_Vertex):
         This vertex is initialized with no neighbours.
 
         Preconditions:
-            - category in {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
-            - price_range in {'1', '2', '3', '4'}
+            - category in range(1, 13)
+            - price_range in range(1, 4)
             - 0 <= review rate <= 5
         """
         super().__init__(category, address, name, price_range, review_rate, location)
         self.neighbours = {}
-
-    def similarity_score(self, other: _Vertex) -> float:
-        """Calculate the similarity score between this vertex and another vertex."""
-        similarity = 0.0
-
-        print('Sort by the factor you value from the most to the least, in order, separate by \',\'.\n'
-              'You may choose from the following: category, prince range, and maximum distance.')
-        ans3 = input('Your answer: ')
-        sorted_factors = [factor.strip() for factor in ans3.split(',')]
-        valid_factors = {'category', 'price range', 'maximum distance'}
-        while not (set(sorted_factors) == valid_factors and len(sorted_factors) == len(valid_factors)):
-            print('This is not a valid option, please enter a valid sorting of the factors:')
-            ans3 = input('Your answer: ')
-            sorted_factors = [factor.strip() for factor in ans3.split(',')]
-
-        weights = [0.5, 0.3, 0.2]  # Priority: 1st, 2nd, 3rd
-        pref_weights = {pref: weight for pref, weight in zip(sorted_factors, weights)}
-
-        # Compare category (assuming 'category' directly maps to 'category')
-        if self.category == other.category:
-            similarity += pref_weights['category']
-
-        # Compare price range
-        if self.price_range == other.price_range:
-            similarity += pref_weights['price range']
-
-        # Compare review rate (assuming this factors into 'maximum distance' for simplicity)
-        rating_difference = abs(self.review_rate - other.review_rate)
-        review_similarity = 1 - (rating_difference / 5.0)
-        similarity += pref_weights['maximum distance'] * review_similarity
-
-        return similarity
 
     def is_within_distance(self, user_lat: float, user_lon: float, max_distance: float) \
             -> bool:
@@ -260,11 +224,43 @@ class _CategoryVertex(_Vertex):
         Determine if the restaurant is within the maximum distance from the user's location.
         """
         res_lat, res_lon = self.location
-        return calculate_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
+        return calculate_euclidean_distance(user_lat, user_lon, res_lat, res_lon) <= max_distance
+
+    def similarity_score(self, other: _CategoryVertex) -> float:
+        """
+        Calculate the Euclidean distance between two restaurants in 4-dimensions such that
+        the coordinates are represented as category, prince range, review rate, and the Euclidean
+        distance between the restaurant and the user. The value returned is the similarity_score.
+        """
+        p0_lat, p0_lon = get_location_from_ip()
+        p1_lat, p1_lon = self.location
+        p2_lat, p2_lon = other.location
+        p1 = (self.category, self.price_range, self.review_rate,
+              calculate_euclidean_distance(p0_lat, p0_lon, p1_lat, p1_lon))
+        p2 = (other.category, other.price_range, other.review_rate,
+              calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
+
+        distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
+        return distance
+
+    def calculate_user_feedback(self, feedback: str) -> None:
+        """
+        Calculate the user feedback / review rate.
+        """
+        if 'yes' in feedback.lower():
+            if self.review_rate < 3.0:
+                self.review_rate += 0.5
+            elif self.review_rate < 5.0:
+                self.review_rate += 0.2
+        else:
+            if self.review_rate <= 0.5:
+                self.review_rate = 0.0
+            else:
+                self.review_rate -= 0.2
 
 
 class CategoryGraph(Graph):
-    """A graph used to represent a categorized/price-ranged restaurants network.
+    """A graph used to represent a restaurant system.
 
     Note that this is a subclass of the Graph class, and so inherits any methods
     from that class that aren't overridden here.
@@ -282,11 +278,13 @@ class CategoryGraph(Graph):
         # This call isn't necessary, except to satisfy PythonTA.
         Graph.__init__(self)
 
-    def vertices(self):
-        # This allows the outside code to read the vertices
-        return self._vertices.values()
+    def get_vertex(self, item: str) -> _CategoryVertex:
+        """
+        Get the vertex of that has the input item name.
+        """
+        return self._vertices[item]
 
-    def add_vertex(self, category: str, address: str, name: str, price_range: int,
+    def add_vertex(self, category: int, address: str, name: str, price_range: int,
                    review_rate: float, location: tuple[float, float]) -> None:
         """Add a vertex with the given attributes to this graph.
 
@@ -296,22 +294,22 @@ class CategoryGraph(Graph):
         if name not in self._vertices:
             self._vertices[name] = _CategoryVertex(category, address, name, price_range, review_rate, location)
 
-    def add_edge(self, name1: Any, name2: Any, edge_type: Union[str, int] = '') -> None:
+    def add_edge(self, name1: Any, name2: Any, similarity_score: float = 1.0) -> None:
         """Add an edge between the two vertices with the given items in this graph,
-        with the given weight.
+        with the given similarity score.
 
-        Raise a ValueError if item1 or item2 do not appear as vertices in this graph.
+        Raise a ValueError if name1 or name2 do not appear as vertices in this graph.
 
         Preconditions:
-            - item1 != item2
+            - name1 != name2
         """
         if name1 in self._vertices and name2 in self._vertices:
             v1 = self._vertices[name1]
             v2 = self._vertices[name2]
 
             # Add the new edge
-            v1.neighbours[v2] = edge_type
-            v2.neighbours[v1] = edge_type
+            v1.neighbours[v2] = similarity_score
+            v2.neighbours[v1] = similarity_score
         else:
             # We didn't find an existing vertex for both items.
             raise ValueError
@@ -329,118 +327,97 @@ class CategoryGraph(Graph):
         v2 = self._vertices[name2]
         return v1.similarity_score(v2)
 
-    def top_restaurant(self) -> str:
+    def similar_rest_all_connected(self, restaurant: str) -> None:
         """
-        Run the recommender and return the top restaurant based on user preference:
-        type of cuisine, maximum acceptable distance, and the price range.
+        Connects restaurant to its top 5 most similar restaurants based on similarity scores.
         """
-        restaurants_type = {'chinese', 'fast food', 'italian', 'japanese', 'indian',
-                            'american', 'thai', 'mexican', 'korean', 'vietnamese', 'vegan', 'french'}
+        similar_res_names = self.most_similar_restaurants(restaurant)
 
-        rest_questions = ['What is your preferred type of cuisine?',
-                          'What is the maximum distance of restaurants you are looking for (in km)?',
-                          'What price range are you looking for?']
+        for res in similar_res_names:
+            s_score = self.get_similarity_score(res, restaurant)
+            self.add_edge(res, restaurant, s_score)
 
-        user_input = get_user_input(rest_questions, restaurants_type)
-        category, distance_range, price_range = user_input
-        player_lat, player_lon = get_location_from_ip()
-        top_res = self.top_reviewed_restaurant(category, player_lat, player_lon, distance_range, price_range)
-
-        return top_res.name
-
-    def top_reviewed_restaurant(self, desired_cuisine: str, user_lat: float, user_lon: float,
-                                max_distance: float, price: int) -> _CategoryVertex:
+    def most_similar_restaurants(self, restaurant: str) -> list[str]:
         """
-        Recommend the top restaurant (as a _CategoryVertex, not the name of the restaurant)
-        based on user location and user's preference of cuisine type, maximum acceptable distance,
-        and acceptable price range.
-        """
-        qualifying_restaurants = []
-        for restaurant in self._vertices.values():
-            if (restaurant.category == desired_cuisine
-                    and restaurant.is_within_distance(max_distance, user_lat, user_lon)
-                    and restaurant.price_range == price):
-                if (restaurant.review_rate, restaurant) not in qualifying_restaurants:
-                    qualifying_restaurants.append((restaurant.review_rate, restaurant))
-
-        sorted_recommendations = sorted(qualifying_restaurants, reverse=True)
-        res_recommendations = [score[1] for score in sorted_recommendations]
-
-        return res_recommendations[0]
-
-    def final_recommend_restaurants(self, restaurant: str, number: int) -> list[str]:
-        """
-        Recommend the top number (i.e. 3, 4, etc.) restaurants by calculating the similarity scores
-        between restaurant and the restaurants with the same category/price range and return a list
-        of length number.
+        Recommend the top 5 most similar restaurants by calculating the similarity score
+        between the restaurant and the rest of the restaurants, then return a list of
+        the names of the top 5 similar restaurants.
         """
         recommendations = []
         for res in self._vertices.values():
             if res.name != restaurant:
-                sim_score = self.get_similarity_score(res, restaurant)
-                if (res.review_rate, restaurant) not in recommendations:
+                sim_score = self.get_similarity_score(res.name, restaurant)
+                if (sim_score, restaurant) not in recommendations:
                     recommendations.append((sim_score, restaurant))
 
         sorted_recommendations = sorted(recommendations, reverse=True)
         final_recommendations = [score[1] for score in sorted_recommendations]
 
-        return final_recommendations[:number]
+        return final_recommendations[:5]
 
-    def modify_review_rate(self, rest: list[str], rates: list[int]) -> None:
+    def get_all_restaurants(self) -> list[_CategoryVertex]:
+        """Return a list of all restaurant vertices in the graph."""
+        # Ensure that _vertices.values() are actually instances of _CategoryVertex
+        return list(self._vertices.values())
+
+    def get_random_restaurant(self) -> _CategoryVertex:
+        """Return a random restaurant from the graph."""
+        if self._vertices:
+            return random.choice(list(self._vertices.values()))
+        else:
+            raise ValueError
+
+
+class AllUsers:
+    """
+    Represents all the users in the food recommender. No instance objects share the same name.
+
+    Instance Attributes:
+        - list_of_users (User): A list of users that have used the FOODER
+    """
+    list_of_users: list[User]
+
+    def __init__(self) -> None:
+        """Initialize AllUsers with an empty list of users."""
+        self.list_of_users = []
+
+
+class User:
+    """
+    Represents a user in the restaurant recommender system.
+
+    Instance Attributes:
+        - name (str): The name of the user.
+        - last_visited_restaurant (_CategoryVertex): The last restaurant visited by the user based
+        on the recommendation system.
+        - disliked_restaurants (set[_CategoryVertex]): A set of restaurants that the user did not like.
+    """
+    name: str
+    last_visited_restaurant: _CategoryVertex | None
+    disliked_restaurants: set[_CategoryVertex]
+
+    def __init__(self, name: str) -> None:
+        """Initialize a user with their name, the lastest resturant they visited and a set of restaurants they dislike.
         """
-        Mutates the graph based on the likes and dislikes the user inputted.
-        This will help the recommender generate a more accurate answer next time based
-        on user's preference on the restaurants.
+        self.name = name
+        self.last_visited_restaurant = None
+        self.disliked_restaurants = set()
+
+    def recommend_restaurants(self, graph: CategoryGraph) -> list[_CategoryVertex]:
         """
-        for i in range(len(rates)):
-            if not rates[i]:
-                self._vertices[rest[i]] -= 0.2
-            else:
-                self._vertices[rest[i]] += 0.2
-
-    # fqy
-    def get_rest_address(self, name: str) -> str:
+        Recommend restaurants based on user's history and feedback if exists.
+        Otherwise, randomly generate a recommendation from the entire graph.
         """
-        Return the address of the input restaurant.
-        """
-        return self._vertices[name].address
+        if self.last_visited_restaurant and self.last_visited_restaurant not in self.disliked_restaurants:
+            similar_restaurants = graph.most_similar_restaurants(self.last_visited_restaurant.name)
+            return [self.last_visited_restaurant] + similar_restaurants
+        else:
+            all_restaurants = graph.get_all_restaurants()
+            filtered_restaurants = [r for r in all_restaurants if r not in self.disliked_restaurants]
+            return random.sample(filtered_restaurants, min(5, len(filtered_restaurants)))
 
 
-# fqy
-def get_user_input(questions: list[str], rest_types: set[str]) -> list[str | int]:
-    """ Return a list of answers the user input."""
-
-    answer_so_far = []
-
-    print(questions[0])
-    print('(Available options: Chinese, Fast food, Italian, American, '
-          'Thai, Mexican, Korean, Vietnamese, Vegan, or French)')
-    ans1 = input('Your answer: ')
-    while ans1.lower() not in rest_types:
-        print('This is not a valid option, please enter another answer:')
-        ans1 = input('Your answer: ')
-    answer_so_far.append(ans1)
-
-    print(questions[1])
-    ans2 = input('Your answer: ')
-    while not ans2.isdigit():
-        print('This is not a number, please enter a correct distance:')
-        ans2 = input('Your answer: ')
-    answer_so_far.append(int(ans2))
-
-    print(questions[2])
-    print('Enter 1 for under $10, 2 for $11-30, 3 for $31-60, or 4 for above $61')
-    ans3 = input('Your answer: ')
-    while ans3 not in {'1', '2', '3', '4'}:
-        print('This is not a valid option, please enter another answer:')
-        ans3 = input('Your answer: ')
-    answer_so_far.append(int(ans3))
-
-    return answer_so_far
-
-
-# Load the graph of all the restaurants, where the edge is either category or price range.
-def load_graph(rest_file: str, edge_type: str) -> CategoryGraph:
+def load_graph(rest_file: str) -> CategoryGraph:
     """Return a restaurant graph corresponding to the given datasets.
 
     The CSV file should have the columns 'Category', 'Restaurant Address', 'Name',
@@ -453,25 +430,23 @@ def load_graph(rest_file: str, edge_type: str) -> CategoryGraph:
         next(reader, None)  # Skip the header row
         for row in reader:
             category, address, name, price_range, review_rate, loc = row
-            # price_min, price_max = map(int, price_range.replace('$', '').split('-'))
-            location = tuple(float(val.strip()) for val in loc.split(','))
+            location = tuple(val.strip() for val in loc.split(','))
             latitude = float(location[0])
             longitude = float(location[1])
             location = (latitude, longitude)
-            review_rate = float(review_rate)
+            if review_rate == 'NA':
+                review_rate = 0
+            else:
+                review_rate = float(review_rate)
 
             graph.add_vertex(category, address, name, price_range, review_rate, location)
 
-    vertices = list(graph.vertices())  # Assuming _vertices stores vertex objects.
-    for i in range(len(vertices)):
-        for j in range(i + 1, len(vertices)):
-            vertex1 = vertices[i]
-            vertex2 = vertices[j]
-            if edge_type == 'category' and vertex1.category == vertex2.category:
-                graph.add_edge(vertex1, vertex2, vertex1.category)
-            elif edge_type == 'price_range' and vertex1.price_range == vertex2.price_range:
-                graph.add_edge(vertex1, vertex2, vertex1.price_range)
-
+    # all_vertices = graph.get_all_vertices()
+    # for i, vertex1 in enumerate(all_vertices):
+    #     for vertex2 in all_vertices[i + 1:]:
+    #         edge_weight = vertex1.calculate_edge(vertex2)  # Assuming calculate_edge is a method in _CategoryVertex
+    #         graph.add_edge(vertex1.name, vertex2.name, edge_weight)
+    #
     return graph
 
 
