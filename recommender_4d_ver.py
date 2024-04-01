@@ -20,6 +20,27 @@ import math
 import random
 import requests
 
+cuisine_type = {1: 'american', 2: 'chinese', 3: 'fast food', 4: 'french', 5: 'indian', 6: 'italian',
+                7: 'japanese', 8: 'korean', 9: 'mexican', 10: 'thai', 11: 'vegan', 12: 'vietnamese'}
+
+p_range = {1: 'Under $10', 2: '$11-30', 3: '$31-60', 4: 'Above $61'}
+
+
+def get_price_range(num: int) -> str:
+    """
+    Return the corresponding price range according to the dictionary mapping
+    cuisine type.
+    """
+    return p_range[num]
+
+
+def get_category(num: int) -> str:
+    """
+    Return the corresponding category according to the dictionary mapping
+    price_range.
+    """
+    return cuisine_type[num]
+
 
 def get_location_from_ip() -> tuple[float, float]:
     """
@@ -240,7 +261,7 @@ class _CategoryVertex(_Vertex):
         p2 = (other.category, other.price_range, other.review_rate,
               calculate_euclidean_distance(p0_lat, p0_lon, p2_lat, p2_lon))
 
-        distance = math.sqrt(sum((float(p1[i]) - float(p2[i])) ** 2 for i in range(4)))
+        distance = math.sqrt(sum((p1[i] - p2[i]) ** 2 for i in range(4)))
         return distance
 
     def calculate_user_feedback(self, feedback: str) -> None:
@@ -383,7 +404,7 @@ class User:
     disliked_restaurants: set[_CategoryVertex]
 
     def __init__(self, name: str) -> None:
-        """Initialize a user with their name, the lastest resturant they visited and a set of restaurants they dislike.
+        """Initialize a user with their name, the latest restaurant they visited and a set of restaurants they dislike.
         """
         self.name = name
         self.last_visited_restaurant = None
@@ -415,7 +436,7 @@ def load_graph(rest_file: str) -> CategoryGraph:
         reader = csv.reader(file)
         next(reader, None)  # Skip the header row
         for row in reader:
-            category, address, name, price_range, review_rate, loc = row
+            category, address, name, price, review_rate, loc = row
             location = tuple(val.strip() for val in loc.split(','))
             latitude = float(location[0])
             longitude = float(location[1])
@@ -425,7 +446,7 @@ def load_graph(rest_file: str) -> CategoryGraph:
             else:
                 review_rate = float(review_rate)
 
-            graph.add_vertex(category, address, name, price_range, review_rate, location)
+            graph.add_vertex(category, address, name, price, review_rate, location)
 
     # all_vertices = graph.get_all_vertices()
     # for i, vertex1 in enumerate(all_vertices):
@@ -460,7 +481,6 @@ class AllUsers:
         return the existing user form the list.
         """
         return self.list_of_users[user_name]
-
 
 
 if __name__ == '__main__':
