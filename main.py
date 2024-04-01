@@ -85,23 +85,24 @@ if __name__ == "__main__":
                     record_last_visited(user, restaurant_graph, satisfied_rest)
                 record_last_visited(user, restaurant_graph, random_rest.name)
                 price_range = get_price_range(int(final_rest.price_range))
-                print(f'Congratulations! You\'ve matched with your restaurant: {final_rest.name}!' +
+                print(f'\nCongratulations! You\'ve matched with your restaurant: {final_rest.name}!' +
                       '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
-                      + f'\nPrice range: {price_range}')
-                satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':')
+                      + f'\nPrice range: {price_range}\n')
+                satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':\n')
                 if 'yes' in satisfy:
-                    print(f"I'm so glad to hear that! I will recommend you more restaurants like "
-                          f"{final_rest.name} in future recommendations.")
+                    print(f"\nI'm so glad to hear that! I will recommend you more restaurants like "
+                          f"{final_rest.name} in future recommendations.\n")
                     user.last_visited_restaurant.calculate_user_feedback('yes')
                 else:
-                    print("We are sorry to hear that you didn't enjoy it. We will avoid recommending it in the future.")
+                    print("\nWe are sorry to hear that you didn't enjoy it. We will avoid recommending "
+                          "it in the future.\n")
                     user.disliked_restaurants.add(user.last_visited_restaurant)
                     user.last_visited_restaurant.calculate_user_feedback('no')
                     user.last_visited_restaurant = None
 
-                again = input('Do you want to get more recommendations? Pleaser enter \'new round\' or \'quit\':')
+                again = input('Do you want to get more recommendations? Pleaser enter \'new round\' or \'quit\':\n')
                 if again == 'quit':
                     quit_game = True
                     break
 
-    print('Thank you for choosing the best restaurant recommender FOODER! It\'s our pleasure to assist you!')
+    print('\nThank you for choosing the best restaurant recommender FOODER! It\'s our pleasure to assist you!')
