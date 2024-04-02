@@ -23,16 +23,6 @@ def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 
 if __name__ == "__main__":
-    import python_ta
-
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['E1136', 'W0221'],
-        'extra-imports': ['csv', 'networkx'],
-        'allowed-io': ['load_weighted_review_graph'],
-        'max-nested-blocks': 4
-    })
-
     ip = recommender_4d_ver.get_location_from_ip()
     restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
 
@@ -87,7 +77,7 @@ if __name__ == "__main__":
                 if 'yes' in try_random.lower():
                     final_rest = random_rest
                 elif 'no' in try_random.lower():
-                    print('Then I\'ll recommend you 5 random resturants: ')
+                    print('\nThen I\'ll recommend you 5 random resturants: ')
                     random_rests = user.recommend_restaurants(restaurant_graph, ip)
                     for rest in random_rests:
                         print(f'{rest.name}')

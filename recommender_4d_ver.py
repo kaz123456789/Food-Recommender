@@ -483,26 +483,3 @@ def load_graph(rest_file: str) -> CategoryGraph:
             graph.add_whole_vertex(curr_v)
 
     return graph
-
-
-if __name__ == '__main__':
-    # You can uncomment the following lines for code checking/debugging purposes.
-    # However, we recommend commenting out these lines when working with the large
-    # datasets, as checking representation invariants and preconditions greatly
-    # increases the running time of the functions/methods.
-    # import python_ta.contracts
-    # python_ta.contracts.check_all_contracts()
-
-    import doctest
-
-    doctest.testmod()
-
-    import python_ta
-
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['E1136', 'W0221'],
-        'extra-imports': ['csv', 'networkx'],
-        'allowed-io': ['load_weighted_review_graph'],
-        'max-nested-blocks': 4
-    })
