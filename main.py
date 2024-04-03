@@ -52,6 +52,11 @@ if __name__ == "__main__":
                     print(item)
                 satisfied_rest = input(
                     '\nPick one restaurant from the following that matches with your taste the most:')
+                if satisfied_rest == 'quit':
+                    quit_game = True
+                    break
+                while satisfied_rest not in you_may_like:
+                    satisfied_rest = input("I couldn't understand what you said, please follow the instruction:)")
                 final_rest = CategoryGraph.get_vertex(restaurant_graph, satisfied_rest)
                 record_last_visited(user, restaurant_graph, satisfied_rest)
                 price_range = get_price_range(int(final_rest.price_range))
@@ -59,6 +64,11 @@ if __name__ == "__main__":
                       + '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
                       + f'\nPrice range: {price_range}\n')
                 satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':\n')
+                if satisfy == 'quit':
+                    quit_game = True
+                    break
+                while satisfy not in ['yes', 'no']:
+                    satisfy = input("I couldn't understand what you said, please follow the instruction:)")
                 if 'yes' in satisfy:
                     print(f"\nI'm so glad to hear that! I will recommend you more restaurants like "
                           f"{final_rest.name} in future recommendations.\n")
@@ -74,6 +84,11 @@ if __name__ == "__main__":
                 final_rest = None
                 random_rest = restaurant_graph.get_random_restaurant()
                 try_random = input(f'Do you want to try: {random_rest.name}? Pleaser enter \'yes\' or \'no\': \n')
+                if try_random == 'quit':
+                    quit_game = True
+                    break
+                while try_random not in ['yes', 'no']:
+                    try_random = input("I couldn't understand what you said, please follow the instruction:)")
                 if 'yes' in try_random.lower():
                     final_rest = random_rest
                 elif 'no' in try_random.lower():
@@ -83,6 +98,11 @@ if __name__ == "__main__":
                         print(f'{rest.name}')
                     satisfied_rest = input(
                         '\nPick one restaurant from the following that matches with your taste the most:')
+                    if satisfied_rest == 'quit':
+                        quit_game = True
+                        break
+                    while satisfied_rest not in random_rests:
+                        satisfied_rest = input("I couldn't understand what you said, please follow the instruction:)")
                     final_rest = CategoryGraph.get_vertex(restaurant_graph, satisfied_rest)
                     record_last_visited(user, restaurant_graph, satisfied_rest)
                 record_last_visited(user, restaurant_graph, random_rest.name)
@@ -91,6 +111,11 @@ if __name__ == "__main__":
                       + '\nDetails about the restaurant:' + f'\nAddress: {final_rest.address}'
                       + f'\nPrice range: {price_range}\n')
                 satisfy = input('Are you satisfy with this restaurant? Pleaser enter \'yes\' or \'no\':\n')
+                if satisfy == 'quit':
+                    quit_game = True
+                    break
+                while satisfy not in ['yes', 'no']:
+                    satisfy = input("I couldn't understand what you said, please follow the instruction:)")
                 if 'yes' in satisfy:
                     print(f"\nI'm so glad to hear that! I will recommend you more restaurants like "
                           f"{final_rest.name} in future recommendations.\n")
@@ -103,6 +128,8 @@ if __name__ == "__main__":
                     user.last_visited_restaurant = None
 
             again = input('Do you want to get more recommendations? Pleaser enter \'new round\' or \'quit\':\n')
+            while again not in ['new round', 'quit']:
+                again = input("I couldn't understand what you said, please follow the instruction:)")
             if again == 'quit':
                 quit_game = True
                 break
