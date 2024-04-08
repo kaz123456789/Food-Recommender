@@ -14,6 +14,7 @@ import recommender_4d_ver
 from recommender_4d_ver import CategoryGraph, AllUsers, User, load_graph, get_price_range
 
 
+
 def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
     """
     Record the last visited restaurant based on the recommendation.
@@ -23,6 +24,13 @@ def record_last_visited(u: User, g: CategoryGraph, restaurant: str) -> None:
 
 
 if __name__ == "__main__":
+
+    import python_ta
+
+    python_ta.check_all(config={
+        'max-line-length': 120,
+    })
+
     ip = recommender_4d_ver.get_location_from_ip()
     restaurant_graph = load_graph("filtered_restaurant_dt_4d.csv")
 
